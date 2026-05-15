@@ -98,6 +98,7 @@ const sessions: Record<string, ConversationContext> = {};
 
 app.post('/api/chat', async (req, res) => {
   try {
+    console.log('[Chat] Request received:', { message, sessionId });
     const { message, image, sessionId = 'test_session' } = req.body;
 
     if (!message && !image) {
@@ -211,8 +212,15 @@ app.post('/api/chat', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error processing chat:', error);
-    res.status(500).json({ error: 'Internal AI Server Error' });
+    console.error('[Chat] Error processing chat:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : String(error);
+    console.error('[Chat] Error details:', {
+      message: errorMessage,
+      stack: errorStack,
+      code: (error as any)?.code
+    });
+    res.status(500).json({ error: 'Internal AI Server Error', details: process.env.NODE_ENV === 'development' ? errorMessage : undefined });
   }
 });
 

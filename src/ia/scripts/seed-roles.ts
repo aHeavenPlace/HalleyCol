@@ -16,6 +16,7 @@ const pool = new Pool({
   user: process.env.PGUSER || 'postgres',
   password: process.env.PGPASSWORD || '12345678',
   database: process.env.PGDATABASE || 'halleycol_db',
+  ssl: true,
 });
 
 const usuariosEjemplo = [
@@ -34,7 +35,7 @@ async function seedRoles() {
 
     for (const usuario of usuariosEjemplo) {
       const passwordHash = await bcrypt.hash(usuario.password, 10);
-      
+
       await client.query(
         `INSERT INTO usuarios (username, password_hash, role)
          VALUES ($1, $2, $3)
@@ -48,7 +49,7 @@ async function seedRoles() {
     }
 
     const result = await client.query('SELECT username, role FROM usuarios ORDER BY role, username');
-    
+
     console.log('\n📋 Usuarios en la base de datos:');
     console.log('   ─────────────────────────────────');
     result.rows.forEach(u => {
