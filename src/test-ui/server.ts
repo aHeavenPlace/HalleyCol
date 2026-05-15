@@ -28,7 +28,7 @@ const pool = new Pool({
   user: process.env.PGUSER || 'postgres',
   password: process.env.PGPASSWORD || '12345678',
   database: process.env.PGDATABASE || 'halleycol_db',
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  ssl: true, // Render DB requiere SSL para conexiones externas
 });
 app.locals.pool = pool;
 

@@ -10,13 +10,18 @@ const router = Router();
 // Endpoint de login
 router.post('/login', async (req: Request, res: Response) => {
   const { username, password } = req.body;
+  console.log('[Auth] Login attempt:', { username, hasPassword: !!password });
+
   if (!username || !password) {
     return res.status(400).json({ error: 'Falta username o password' });
   }
 
   try {
     const pool: Pool = req.app.locals.pool;
+    console.log('[Auth] Querying DB for user:', username);
+
     const userResult = await pool.query('SELECT * FROM usuarios WHERE username = $1', [username]);
+    console.log('[Auth] Query result:', { rowCount: userResult.rowCount });
 
     if (userResult.rowCount === 0) {
       return res.status(401).json({ error: 'Credenciales inválidas' });
