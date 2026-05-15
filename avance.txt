@@ -1,0 +1,188 @@
+====================================================================
+  HALLEYCOL — AVANCE DEL MÓDULO DE INTELIGENCIA ARTIFICIAL
+  Fecha: 2026-04-16
+  Versión: MVP v1.0.0
+====================================================================
+
+--------------------------------------------------------------------
+1. DESCRIPCIÓN GENERAL
+--------------------------------------------------------------------
+Se desarrolló el módulo de Inteligencia Artificial para HalleyCol,
+una tienda de calzado femenino online en Bucaramanga. El módulo está
+ubicado en:
+
+  C:\Users\Who\Documents\HalleyCol\src\ia\
+
+El objetivo es proporcionar un chatbot conversacional capaz de:
+  - Responder preguntas frecuentes (tallas, envíos, pagos)
+  - Clasificar la intención del cliente
+  - Mantener el contexto de la conversación por 5 minutos
+  - Detectar frustración y derivar a un agente humano (handoff)
+
+--------------------------------------------------------------------
+2. STACK TECNOLÓGICO
+--------------------------------------------------------------------
+  - Lenguaje:    TypeScript (tipado estricto)
+  - Entorno:     Node.js + CommonJS
+  - Motor IA:    Regex + diccionario ponderado (MVP v1.0.0)
+  - Motor futuro: Gemini CLI — estructura base lista (v1.1.0)
+  - Tests:       Runner manual (sin framework externo)
+  - Config TS:   tsconfig.ia.json
+  - Dependencias devDependencies: typescript, ts-node, @types/node
+
+--------------------------------------------------------------------
+3. ESTRUCTURA DE ARCHIVOS CREADOS
+--------------------------------------------------------------------
+
+  src/ia/
+  ├── interfaces/
+  │   └── IAService.interface.ts        ← Contrato principal del motor IA
+  ├── services/
+  │   ├── RegexClassifier.service.ts    ← Motor IA funcional (MVP v1.0.0)
+  │   ├── GeminiClassifier.service.ts   ← Preview arquitectónico (v1.1.0)
+  │   └── ConversationContext.service.ts ← Gestor de sesiones en memoria
+  ├── strategies/
+  │   └── IntentClassification.strategy.ts ← Handoff + patrón Strategy
+  ├── utils/
+  │   ├── intent-dictionary.ts          ← 9 intenciones con keywords y pesos
+  │   ├── regex-patterns.ts             ← Extracción de entidades del texto
+  │   ├── response-templates.ts         ← Plantillas de respuesta interpolables
+  │   └── IALogger.ts                   ← Logs estructurados para fine-tuning
+  ├── types/
+  │   └── ia.types.ts                   ← Todos los tipos TypeScript del módulo
+  ├── tests/
+  │   └── RegexClassifier.test.ts       ← 27 tests en 4 suites
+  └── index.ts                          ← Factory + re-exports de todo el módulo
+
+  Archivos de configuración del proyecto:
+  ├── package.json                      ← Scripts y dependencias
+  └── tsconfig.ia.json                  ← Config TypeScript para Node.js
+
+--------------------------------------------------------------------
+4. FUNCIONALIDADES IMPLEMENTADAS (v1.0.0)
+--------------------------------------------------------------------
+
+  [A] CLASIFICADOR DE INTENCIONES (RegexClassifier)
+      Clasifica mensajes del cliente en 9 intenciones:
+        1. consulta_talla   - Preguntas sobre tallas disponibles
+        2. estado_pedido    - Seguimiento de pedidos (formato HC-XXXX)
+        3. faq_pago         - Métodos de pago (Nequi, Daviplata, etc.)
+        4. faq_envio        - Tiempos y costos de envío
+        5. quejar           - Reclamos y quejas
+        6. hablar_humano    - Solicitud de agente humano
+        7. saludo           - Saludos iniciales
+        8. despedida        - Cierre de conversación
+        9. otro             - Fallback para mensajes no reconocidos
+
+      Algoritmo de puntuación:
+        - Regex principal hace match  → confidence = weight (ej: 0.88)
+        - Solo keywords hacen match   → confidence = keywordWeight (ej: 0.68)
+        - Sin match                   → intent = 'otro', confidence = 0.20
+        - Umbral configurable (default 0.75). Bajo el umbral → handoff
+
+  [B] EXTRACCIÓN DE ENTIDADES
+      Extrae automáticamente del texto del cliente:
+        - Talla:        números 34–42 (ej: "talla 38" → '38')
+        - Color:        colores en singular/plural (ej: "rosadas")
+        - Ciudad:       ciudades colombianas con/sin tilde (ej: "Bogotá")
+        - Nro. pedido:  formato HC-XXXX (ej: "HC-5678")
+        - Teléfono:     números colombianos de 10 dígitos
+        - Tipo calzado: sandalias, botas, tacones, etc.
+
+  [C] GESTOR DE CONTEXTO CONVERSACIONAL
+      - Sesiones en memoria (Map de JavaScript) con TTL de 5 minutos
+      - Renovación automática del TTL en cada interacción (sliding window)
+      - Guarda historial de intenciones, talla mencionada, producto consultado
+      - Preparado para migrar a Redis sin cambiar la interfaz (patrón Repository)
+
+  [D] MOTOR DE PLANTILLAS DE RESPUESTA
+      - Una plantilla por intención con variables interpolables
+      - Datos reales de HalleyCol: número Nequi, ciudades, tiempos de envío
+      - Botones de acción rápida por intención
+      - Plantilla especial de handoff
+
+  [E] DETECCIÓN DE HANDOFF (derivación a humano)
+      Dispara handoff automático cuando detecta:
+        - Palabras de frustración: "pésimo", "nunca llega", "estafa", etc.
+        - Solicitud explícita: "hablar con asesor", "quiero un humano", etc.
+        - Confidence de clasificación por debajo del umbral mínimo (0.50)
+        - Número máximo de reintentos con baja confianza (2 reintentos)
+      Al disparar: emite HandoffEvent y notifica al módulo CRM
+
+  [F] SISTEMA DE LOGS ESTRUCTURADOS
+      Registra cada interacción con:
+        - Timestamp, sessionId, mensaje original
+        - Intención clasificada y nivel de confianza
+        - Respuesta enviada al cliente
+        - Si fue derivado a humano
+        - Feedback del usuario (positivo/negativo)
+      En desarrollo: imprime en consola
+      En producción: diseñado para persistir en PostgreSQL
+      Propósito futuro: dataset para fine-tuning de Gemini
+
+  [G] FACTORY PATTERN (createIAService)
+      Instancia el motor correcto según variables de entorno:
+        - AI_ENGINE=regex   → RegexClassifier  (activo)
+        - AI_ENGINE=gemini  → GeminiClassifier (pendiente v1.1.0)
+        - IA_CONFIDENCE_THRESHOLD → umbral de confianza (default: 0.75)
+        - SESSION_TTL_MINUTES    → duración de sesión (default: 5)
+
+--------------------------------------------------------------------
+5. PREVIEW v1.1.0 — GEMINI CLASSIFIER
+--------------------------------------------------------------------
+El archivo GeminiClassifier.service.ts implementa la MISMA interfaz
+que RegexClassifier (IAService), por lo que cuando se integre Gemini
+CLI, el resto del sistema no necesita modificaciones.
+
+Pendiente para v1.1.0:
+  - Instalar: npm install @google/generative-ai
+  - Configurar GEMINI_API_KEY en variables de entorno
+  - Implementar prompt de sistema con contexto HalleyCol
+  - Parsear respuesta JSON de Gemini a IntentResult
+  - Activar con: AI_ENGINE=gemini
+
+--------------------------------------------------------------------
+6. TESTS
+--------------------------------------------------------------------
+  Archivo: src/ia/tests/RegexClassifier.test.ts
+  Resultado: 27 passed · 0 failed
+
+  Suite 1 — Clasificación de Intenciones (10 tests)
+    Verifica que cada tipo de mensaje se asigne a la intención correcta.
+
+  Suite 2 — Extracción de Entidades (6 tests)
+    Verifica que talla, color, ciudad y número de pedido se extraigan del texto.
+
+  Suite 3 — Generación de Respuestas (7 tests)
+    Verifica que las respuestas contengan la información correcta del negocio.
+
+  Suite 4 — Gestión de Sesiones (4 tests)
+    Verifica crear, recuperar, y expirar sesiones correctamente.
+
+  Para ejecutar:
+    cd C:\Users\Who\Documents\HalleyCol
+    npm run test:ia
+
+--------------------------------------------------------------------
+7. PATRONES DE DISEÑO APLICADOS
+--------------------------------------------------------------------
+  - Strategy:    IAService es la estrategia; Regex y Gemini son implementaciones
+  - Repository:  ConversationContextService preparado para cambiar a Redis
+  - Factory:     createIAService() instancia el motor según el entorno
+  - SOLID:       Cada clase tiene una única responsabilidad
+
+--------------------------------------------------------------------
+8. PRÓXIMOS PASOS SUGERIDOS
+--------------------------------------------------------------------
+  [ ] Integrar el módulo con el backend Express existente
+  [ ] Conectar el chatbot (chatbot.html) con RegexClassifier via API REST
+  [ ] Crear endpoint POST /api/chat que use createIAService()
+  [ ] Configurar la tabla ia_logs en PostgreSQL para producción
+  [ ] Implementar GeminiClassifier cuando se obtenga la API Key
+  [ ] Mejorar los tests con mensajes adversariales (paráfrasis, errores tipográficos)
+  [ ] Agregar más intenciones según preguntas frecuentes reales de clientes
+
+====================================================================
+  Desarrollado con TypeScript · Node.js · Patrón Strategy
+  HalleyCol — Calzado Femenino · Bucaramanga, Colombia
+====================================================================

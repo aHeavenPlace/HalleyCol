@@ -1,0 +1,8 @@
+Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent: [503 Service Unavailable] This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.
+    at handleResponseNotOk (C:\Users\Who\Documents\HalleyCol\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async makeRequest (C:\Users\Who\Documents\HalleyCol\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at async generateContent (C:\Users\Who\Documents\HalleyCol\node_modules\@google\generative-ai\dist\index.js:867:22)
+    at async GeminiClassifier.generateResponse (C:\Users\Who\Documents\HalleyCol\src\ia\services\GeminiClassifier.service.ts:60:22)
+    at async RegexClassifier.classifyIntent (C:\Users\Who\Documents\HalleyCol\src\ia\services\RegexClassifier.service.ts:125:26)
+    at async C:\Users\Who\Documents\HalleyCol\src\test-ui\server.ts:85:26

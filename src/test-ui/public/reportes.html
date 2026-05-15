@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes - HalleyCol CRM</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="/img/logo.png" alt="HalleyCol">
+                </div>
+                <div class="sidebar-brand">
+                    <h1>HalleyCol</h1>
+                    <p>CRM System</p>
+                </div>
+            </div>
+            <div class="sidebar-user">
+                <div class="sidebar-user-role">ROLE</div>
+                <div class="sidebar-user-name">Usuario</div>
+            </div>
+            <nav>
+                <ul class="sidebar-nav" id="sidebarNav"></ul>
+            </nav>
+            <div class="sidebar-logout">
+                <a href="#" onclick="HalleyCol.auth.logout(); return false;">🚪 Cerrar Sesión</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">📈 Reportes</h1>
+                    <p class="page-subtitle">Estadísticas y métricas del negocio</p>
+                </div>
+            </div>
+            <div id="alertContainer"></div>
+
+            <!-- Stats Generales -->
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-icon primary">📦</div>
+                    <div class="stat-content">
+                        <h3 id="statTotalPedidos">-</h3>
+                        <p>Total Pedidos</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon success">💰</div>
+                    <div class="stat-content">
+                        <h3 id="statVentasTotales">-</h3>
+                        <p>Ventas Totales</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon warning">👥</div>
+                    <div class="stat-content">
+                        <h3 id="statClientesUnicos">-</h3>
+                        <p>Clientes Únicos</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon danger">🎫</div>
+                    <div class="stat-content">
+                        <h3 id="statTicketPromedio">-</h3>
+                        <p>Ticket Promedio</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Métodos de Pago -->
+            <div class="table-container" style="margin-top: 20px;">
+                <div class="table-header">
+                    <h2>💳 Métodos de Pago</h2>
+                </div>
+                <div id="metodosPagoContainer">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Productos Más Vendidos -->
+            <div class="table-container" style="margin-top: 20px;">
+                <div class="table-header">
+                    <h2>🔥 Productos Más Vendidos</h2>
+                </div>
+                <div id="productosVendidosContainer">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="/js/app.js"></script>
+    <script>
+        if (!HalleyCol.auth.requireRole('admin', 'ventas')) window.location.href = '/unauthorized';
+        const user = HalleyCol.auth.getCurrentUser();
+        HalleyCol.ui.initSidebar();
+
+        async function loadReports() {
+            try {
+                const data = await HalleyCol.api.request('/reports');
+
+                document.getElementById('statTotalPedidos').textContent = data.total_pedidos || 0;
+                document.getElementById('statVentasTotales').textContent = HalleyCol.ui.formatCurrency(data.ventas_totales);
+                document.getElementById('statClientesUnicos').textContent = data.clientes_unicos || 0;
+                document.getElementById('statTicketPromedio').textContent = HalleyCol.ui.formatCurrency(data.ticket_promedio);
+
+                // Métodos de pago
+                const mpContainer = document.getElementById('metodosPagoContainer');
+                if (data.metodos_pago && data.metodos_pago.length > 0) {
+                    mpContainer.innerHTML = `<table><thead><tr><th>Método</th><th>Cantidad</th></tr></thead><tbody>${data.metodos_pago.map(m => `<tr><td>${m.metodo_pago}</td><td><strong>${m.count}</strong></td></tr>`).join('')}</tbody></table>`;
+                } else {
+                    mpContainer.innerHTML = '<div class="empty-state"><p>No hay datos de métodos de pago</p></div>';
+                }
+
+                // Productos vendidos
+                const pvContainer = document.getElementById('productosVendidosContainer');
+                if (data.productos_vendidos && data.productos_vendidos.length > 0) {
+                    pvContainer.innerHTML = `<table><thead><tr><th>Producto</th><th>Unidades</th><th>Ingresos</th></tr></thead><tbody>${data.productos_vendidos.map(p => `<tr><td>${p.nombre}</td><td>${p.unidades}</td><td><strong>${HalleyCol.ui.formatCurrency(p.ingresos)}</strong></td></tr>`).join('')}</tbody></table>`;
+                } else {
+                    pvContainer.innerHTML = '<div class="empty-state"><p>No hay datos de productos vendidos</p></div>';
+                }
+            } catch (error) {
+                HalleyCol.ui.showAlert('alertContainer', 'Error cargando reportes', 'error');
+            }
+        }
+
+        const navItems = {
+            'admin': [{ href: '/dashboard', icon: '📊', label: 'Dashboard' }, { href: '/productos', icon: '📦', label: 'Productos' }, { href: '/pedidos', icon: '📋', label: 'Pedidos' }, { href: '/conversaciones', icon: '💬', label: 'Conversaciones' }, { href: '/clientes', icon: '👥', label: 'Clientes' }, { href: '/reportes', icon: '📈', label: 'Reportes' }],
+            'ventas': [{ href: '/dashboard', icon: '📊', label: 'Dashboard' }, { href: '/productos', icon: '📦', label: 'Productos' }, { href: '/pedidos', icon: '📋', label: 'Pedidos' }, { href: '/clientes', icon: '👥', label: 'Clientes' }, { href: '/reportes', icon: '📈', label: 'Reportes' }],
+        };
+        document.getElementById('sidebarNav').innerHTML = (navItems[user.role] || navItems['ventas']).map(item => `<li><a href="${item.href}" class="${window.location.pathname === item.href ? 'active' : ''}">${item.icon} ${item.label}</a></li>`).join('');
+        loadReports();
+    </script>
+</body>
+
+</html>

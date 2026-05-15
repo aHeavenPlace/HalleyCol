@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversaciones - HalleyCol CRM</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="/img/logo.png" alt="HalleyCol">
+                </div>
+                <div class="sidebar-brand">
+                    <h1>HalleyCol</h1>
+                    <p>CRM System</p>
+                </div>
+            </div>
+            
+            <div class="sidebar-user">
+                <div class="sidebar-user-role">ASESOR</div>
+                <div class="sidebar-user-name">Usuario</div>
+            </div>
+            
+            <nav>
+                <ul class="sidebar-nav">
+                    <li><a href="/dashboard-asesor" class="active">💬 Conversaciones</a></li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-logout">
+                <a href="#" onclick="HalleyCol.auth.logout(); return false;">🚪 Cerrar Sesión</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">💬 Centro de Atención</h1>
+                    <p class="page-subtitle">Gestioná las conversaciones que requieren atención humana</p>
+                </div>
+            </div>
+
+            <div id="alertContainer"></div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon primary">💬</div>
+                    <div class="stat-content">
+                        <h3 id="statTotales">-</h3>
+                        <p>Total Conversaciones</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon warning">⚠️</div>
+                    <div class="stat-content">
+                        <h3 id="statRequierenAsesor">-</h3>
+                        <p>Requieren Asesor</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon success">✅</div>
+                    <div class="stat-content">
+                        <h3 id="statActivas">-</h3>
+                        <p>Activas Hoy</p>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <!-- Lista de conversaciones -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <h2>Conversaciones</h2>
+                        <div class="table-actions">
+                            <label style="font-size: 12px; display: flex; align-items: center; gap: 6px;">
+                                <input type="checkbox" id="filterRequierenAsesor" checked>
+                                Solo requieren asesor
+                            </label>
+                        </div>
+                    </div>
+                    <div id="conversacionesContainer" style="max-height: 60vh; overflow-y: auto;">
+                        <div class="loading"><div class="spinner"></div></div>
+                    </div>
+                </div>
+
+                <!-- Mensajes de la conversación seleccionada -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <h2 id="chatTitle">Selecciona una conversación</h2>
+                    </div>
+                    <div id="mensajesContainer" style="max-height: 60vh; overflow-y: auto; padding: 20px;">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">💬</div>
+                            <h3>Sin mensajes</h3>
+                            <p>Selecciona una conversación para ver el historial</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        // Verificar autenticación - solo asesor y admin
+        if (!HalleyCol.auth.requireRole('admin', 'asesor')) {
+            window.location.href = '/unauthorized';
+        }
+
+        const user = HalleyCol.auth.getCurrentUser();
+        HalleyCol.ui.initSidebar();
+
+        // Cargar conversaciones
+        async function loadConversations() {
+            try {
+                const data = await HalleyCol.api.request('/conversations');
+                updateStats(data.conversations);
+                renderConversations(data.conversations);
+            } catch (error) {
+                HalleyCol.ui.showAlert('alertContainer', 'Error cargando conversaciones', 'error');
+            }
+        }
+
+        function updateStats(conversations) {
+            const hoy = new Date().toDateString();
+            const activasHoy = conversations.filter(c => new Date(c.updated_at).toDateString() === hoy).length;
+            const requierenAsesor = conversations.filter(c => c.necesita_asesor).length;
+            
+            document.getElementById('statTotales').textContent = conversations.length;
+            document.getElementById('statRequierenAsesor').textContent = requierenAsesor;
+            document.getElementById('statActivas').textContent = activasHoy;
+        }
+
+        function renderConversations(conversations) {
+            const filterAsesor = document.getElementById('filterRequierenAsesor').checked;
+            const filtered = filterAsesor 
+                ? conversations.filter(c => c.necesita_asesor)
+                : conversations;
+            
+            const container = document.getElementById('conversacionesContainer');
+            
+            if (!filtered || filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">💬</div>
+                        <h3>No hay conversaciones</h3>
+                        <p>${filterAsesor ? 'No hay conversaciones que requieran asesor' : 'Las conversaciones del chatbot aparecerán aquí'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(c => `
+                <div onclick="loadMessages('${c.session_id}')" style="padding: 16px 20px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='var(--light)'" onmouseout="this.style.background='white'">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <strong style="font-size: 14px;">${c.cliente_whatsapp || c.session_id}</strong>
+                        ${c.necesita_asesor ? '<span class="badge badge-danger">Requiere Asesor</span>' : '<span class="badge badge-success">Atendido</span>'}
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--gray);">
+                        <span>Estado: ${c.estado_fsm}</span>
+                        <span>${HalleyCol.ui.formatRelativeTime(c.updated_at)}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('filterRequierenAsesor').addEventListener('change', () => {
+            loadConversations();
+        });
+
+        async function loadMessages(sessionId) {
+            try {
+                document.getElementById('chatTitle').textContent = `Mensajes: ${sessionId}`;
+                document.getElementById('mensajesContainer').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+                
+                const data = await HalleyCol.api.request(`/conversations/${sessionId}/messages`);
+                renderMessages(data.messages);
+            } catch (error) {
+                document.getElementById('mensajesContainer').innerHTML = `
+                    <div class="empty-state"><p>Error cargando mensajes</p></div>
+                `;
+            }
+        }
+
+        function renderMessages(messages) {
+            const container = document.getElementById('mensajesContainer');
+            
+            if (!messages || messages.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">💬</div>
+                        <h3>Sin mensajes</h3>
+                        <p>Esta conversación no tiene mensajes</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = messages.map(m => `
+                <div style="margin-bottom: 12px; padding: 12px 16px; border-radius: 12px; max-width: 80%; ${m.emisor === 'user' ? 'background: var(--primary); color: white; margin-left: auto;' : 'background: var(--light);'}">
+                    <div style="font-size: 11px; opacity: 0.7; margin-bottom: 4px;">
+                        ${m.emisor === 'user' ? '👤 Usuario' : m.emisor === 'bot' ? '🤖 Bot' : '👨‍💼 Asesor'} • ${HalleyCol.ui.formatRelativeTime(m.created_at)}
+                    </div>
+                    <div style="white-space: pre-wrap; word-break: break-word;">${m.contenido}</div>
+                </div>
+            `).join('');
+        }
+
+        loadConversations();
+    </script>
+</body>
+</html>

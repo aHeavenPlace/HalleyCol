@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productos - HalleyCol CRM</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="/img/logo.png" alt="HalleyCol">
+                </div>
+                <div class="sidebar-brand">
+                    <h1>HalleyCol</h1>
+                    <p>CRM System</p>
+                </div>
+            </div>
+
+            <div class="sidebar-user">
+                <div class="sidebar-user-role">ROLE</div>
+                <div class="sidebar-user-name">Usuario</div>
+            </div>
+
+            <nav>
+                <ul class="sidebar-nav" id="sidebarNav">
+                    <!-- Se llena dinámicamente según el rol -->
+                </ul>
+            </nav>
+
+            <div class="sidebar-logout">
+                <a href="#" onclick="HalleyCol.auth.logout(); return false;">
+                    🚪 Cerrar Sesión
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">📦 Productos</h1>
+                    <p class="page-subtitle">Gestión de inventario de calzado</p>
+                </div>
+                <div class="table-actions">
+                    <button class="btn-primary" id="btnAddProduct" style="display: none;">+ Nuevo Producto</button>
+                </div>
+            </div>
+
+            <div id="alertContainer"></div>
+
+            <div class="table-container">
+                <div class="table-header">
+                    <h2>Catálogo de Productos</h2>
+                </div>
+                <div id="productosContainer">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Agregar/Edita Producto -->
+    <div class="form-modal" id="productModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Nuevo Producto</h2>
+                <button class="modal-close" onclick="closeProductModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="productForm">
+                    <input type="hidden" id="productId">
+                    <div class="form-group">
+                        <label for="productName">Nombre del Producto</label>
+                        <input type="text" id="productName" required placeholder="Ej: Nike Air Max 90">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productBrand">Marca</label>
+                            <select id="productBrand" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="Nike">Nike</option>
+                                <option value="Adidas">Adidas</option>
+                                <option value="Puma">Puma</option>
+                                <option value="Reebok">Reebok</option>
+                                <option value="Under Armour">Under Armour</option>
+                                <option value="New Balance">New Balance</option>
+                                <option value="Vans">Vans</option>
+                                <option value="Converse">Converse</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="productCategory">Categoría</label>
+                            <select id="productCategory" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="Deportivo">Deportivo</option>
+                                <option value="Casual">Casual</option>
+                                <option value="Running">Running</option>
+                                <option value="Urbano">Urbano</option>
+                                <option value="Formal">Formal</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productPrice">Precio (COP)</label>
+                            <input type="number" id="productPrice" required placeholder="Ej: 250000" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="productSizes">Tallas Disponibles</label>
+                            <input type="text" id="productSizes" placeholder="Ej: 36,37,38,39,40"
+                                hint="Separadas por coma">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="productStock">Stock (JSON)</label>
+                        <textarea id="productStock" rows="3" placeholder='Ej: {"36": 5, "37": 10, "38": 8}'></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeProductModal()">Cancelar</button>
+                <button class="btn-primary" onclick="saveProduct()">Guardar Producto</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        // Verificar autenticación y rol
+        if (!HalleyCol.auth.requireRole('admin', 'ventas')) {
+            window.location.href = '/unauthorized';
+        }
+
+        // Inicializar sidebar según rol
+        const user = HalleyCol.auth.getCurrentUser();
+        HalleyCol.ui.initSidebar();
+
+        // Mostrar botón de agregar solo para admin y ventas
+        if (HalleyCol.auth.hasRole('admin', 'ventas')) {
+            document.getElementById('btnAddProduct').style.display = 'block';
+        }
+
+        // Cargar productos
+        async function loadProducts() {
+            try {
+                const data = await HalleyCol.api.request('/products');
+                HalleyCol.ui.renderProductsTable(data.products, 'productosContainer');
+            } catch (error) {
+                console.error('Error loading products:', error);
+                HalleyCol.ui.showAlert('alertContainer', 'Error cargando productos', 'error');
+            }
+        }
+
+        // Modal functions
+        function openProductModal(product = null) {
+            document.getElementById('productModal').classList.add('active');
+            if (product) {
+                document.getElementById('modalTitle').textContent = 'Editar Producto';
+                document.getElementById('productId').value = product.id;
+                document.getElementById('productName').value = product.name;
+                document.getElementById('productBrand').value = product.brand;
+                document.getElementById('productCategory').value = product.category;
+                document.getElementById('productPrice').value = product.price;
+                document.getElementById('productSizes').value = product.available_sizes?.join(',') || '';
+                document.getElementById('productStock').value = JSON.stringify(product.stock, null, 2);
+            } else {
+                document.getElementById('modalTitle').textContent = 'Nuevo Producto';
+                document.getElementById('productForm').reset();
+            }
+        }
+
+        function closeProductModal() {
+            document.getElementById('productModal').classList.remove('active');
+        }
+
+        // Guardar producto
+        async function saveProduct() {
+            const id = document.getElementById('productId').value || `PROD-${Date.now()}`;
+            const sizesInput = document.getElementById('productSizes').value;
+            const stockInput = document.getElementById('productStock').value;
+
+            let stock = {};
+            try {
+                stock = stockInput ? JSON.parse(stockInput) : {};
+            } catch (e) {
+                alert('El stock debe ser un JSON válido');
+                return;
+            }
+
+            const product = {
+                id,
+                name: document.getElementById('productName').value,
+                brand: document.getElementById('productBrand').value,
+                category: document.getElementById('productCategory').value,
+                price: parseInt(document.getElementById('productPrice').value),
+                available_sizes: sizesInput ? sizesInput.split(',').map(s => s.trim()) : [],
+                stock,
+            };
+
+            try {
+                await HalleyCol.api.request('/products', {
+                    method: 'POST',
+                    body: JSON.stringify(product),
+                });
+
+                HalleyCol.ui.showAlert('alertContainer', 'Producto guardado exitosamente', 'success');
+                closeProductModal();
+                loadProducts();
+            } catch (error) {
+                HalleyCol.ui.showAlert('alertContainer', 'Error guardando producto: ' + error.message, 'error');
+            }
+        }
+
+        document.getElementById('btnAddProduct').addEventListener('click', () => openProductModal());
+
+        loadProducts();
+
+        // Renderizar sidebar dinámico según el rol
+        const navItems = {
+            'admin': [
+                { href: '/dashboard', icon: '📊', label: 'Dashboard' },
+                { href: '/productos', icon: '📦', label: 'Productos' },
+                { href: '/pedidos', icon: '📋', label: 'Pedidos' },
+                { href: '/conversaciones', icon: '💬', label: 'Conversaciones' },
+                { href: '/clientes', icon: '👥', label: 'Clientes' },
+                { href: '/reportes', icon: '📈', label: 'Reportes' },
+            ],
+            'ventas': [
+                { href: '/dashboard', icon: '📊', label: 'Dashboard' },
+                { href: '/productos', icon: '📦', label: 'Productos' },
+                { href: '/pedidos', icon: '📋', label: 'Pedidos' },
+                { href: '/clientes', icon: '👥', label: 'Clientes' },
+                { href: '/reportes', icon: '📈', label: 'Reportes' },
+            ],
+        };
+
+        const nav = document.getElementById('sidebarNav');
+        const items = navItems[user.role] || navItems['ventas'];
+        nav.innerHTML = items.map(item => `
+            <li><a href="${item.href}" class="${window.location.pathname === item.href ? 'active' : ''}">${item.icon} ${item.label}</a></li>
+        `).join('');
+    </script>
+</body>
+
+</html>

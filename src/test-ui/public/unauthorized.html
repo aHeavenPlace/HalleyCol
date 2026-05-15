@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso Denegado - HalleyCol CRM</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .unauthorized-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--light);
+            text-align: center;
+            padding: 40px;
+        }
+
+        .unauthorized-content {
+            background: white;
+            padding: 60px 40px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            max-width: 500px;
+        }
+
+        .unauthorized-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .unauthorized-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 12px;
+        }
+
+        .unauthorized-message {
+            color: var(--gray);
+            font-size: 16px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .btn-login {
+            display: inline-block;
+            padding: 14px 32px;
+            background: var(--success);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-login:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="unauthorized-container">
+        <div class="unauthorized-content">
+            <div class="unauthorized-icon">🚫</div>
+            <h1 class="unauthorized-title">Acceso Denegado</h1>
+            <p class="unauthorized-message">
+                No tienes permisos para acceder a esta página.<br>
+                Tu rol no tiene los privilegios necesarios.
+            </p>
+            <a href="/login" class="btn-login">Iniciar Sesión con otra cuenta</a>
+        </div>
+    </div>
+</body>
+
+</html>

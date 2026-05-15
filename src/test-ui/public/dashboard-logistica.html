@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedidos - HalleyCol CRM</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="/img/logo.png" alt="HalleyCol">
+                </div>
+                <div class="sidebar-brand">
+                    <h1>HalleyCol</h1>
+                    <p>CRM System</p>
+                </div>
+            </div>
+            
+            <div class="sidebar-user">
+                <div class="sidebar-user-role">LOGÍSTICA</div>
+                <div class="sidebar-user-name">Usuario</div>
+            </div>
+            
+            <nav>
+                <ul class="sidebar-nav">
+                    <li><a href="/dashboard-logistica" class="active">📋 Mis Pedidos</a></li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-logout">
+                <a href="#" onclick="HalleyCol.auth.logout(); return false;">🚪 Cerrar Sesión</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">📋 Gestión de Pedidos</h1>
+                    <p class="page-subtitle">Administrá el estado y las guías de envío</p>
+                </div>
+            </div>
+
+            <div id="alertContainer"></div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon primary">📦</div>
+                    <div class="stat-content">
+                        <h3 id="statPendientes">-</h3>
+                        <p>Pendientes</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon warning">🚚</div>
+                    <div class="stat-content">
+                        <h3 id="statEnviados">-</h3>
+                        <p>Enviados</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon success">✅</div>
+                    <div class="stat-content">
+                        <h3 id="statEntregados">-</h3>
+                        <p>Entregados</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon danger">⚠️</div>
+                    <div class="stat-content">
+                        <h3 id="statRechazados">-</h3>
+                        <p>Rechazados</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pedidos para gestionar -->
+            <div class="table-container">
+                <div class="table-header">
+                    <h2>Todos los Pedidos</h2>
+                    <div class="table-actions">
+                        <select id="filterEstado" style="padding: 8px 12px; border: 2px solid var(--border); border-radius: 8px; font-size: 13px;">
+                            <option value="">Todos los estados</option>
+                            <option value="Pendiente Validacion">Pendiente Validación</option>
+                            <option value="Pendiente Despacho">Pendiente Despacho</option>
+                            <option value="Pagado">Pagado</option>
+                            <option value="Enviado">Enviado</option>
+                            <option value="Entregado">Entregado</option>
+                            <option value="Rechazado">Rechazado</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="pedidosContainer">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Actualizar Pedido -->
+    <div class="form-modal" id="orderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Actualizar Pedido</h2>
+                <button class="modal-close" onclick="closeOrderModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="orderForm">
+                    <input type="hidden" id="orderId">
+                    <div class="form-group">
+                        <label>Número de Orden</label>
+                        <input type="text" id="orderNumero" readonly style="background: var(--light);">
+                    </div>
+                    <div class="form-group">
+                        <label>Cliente</label>
+                        <input type="text" id="orderCliente" readonly style="background: var(--light);">
+                    </div>
+                    <div class="form-group">
+                        <label>Productos</label>
+                        <input type="text" id="orderProductos" readonly style="background: var(--light);">
+                    </div>
+                    <div class="form-group">
+                        <label>Total</label>
+                        <input type="text" id="orderTotal" readonly style="background: var(--light);">
+                    </div>
+                    <div class="form-group">
+                        <label for="orderEstado">Estado</label>
+                        <select id="orderEstado" required>
+                            <option value="Pendiente">Pendiente</option>
+                            <option value="Pendiente Validacion">Pendiente Validación</option>
+                            <option value="Pendiente Despacho">Pendiente Despacho</option>
+                            <option value="Pagado">Pagado</option>
+                            <option value="Enviado">Enviado</option>
+                            <option value="Entregado">Entregado</option>
+                            <option value="Rechazado">Rechazado</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="orderGuia">Número de Guía</label>
+                        <input type="text" id="orderGuia" placeholder="Ej: GUIA123456">
+                    </div>
+                    <div class="form-group">
+                        <label for="orderLogistica">Empresa de Logística</label>
+                        <select id="orderLogistica">
+                            <option value="">Seleccionar...</option>
+                            <option value="Servientrega">Servientrega</option>
+                            <option value="Coordinadora">Coordinadora</option>
+                            <option value="Envía">Envía</option>
+                            <option value="DHL">DHL</option>
+                            <option value="FedEx">FedEx</option>
+                            <option value="Logística Propia">Logística Propia</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeOrderModal()">Cancelar</button>
+                <button class="btn-primary" onclick="saveOrder()">Actualizar Pedido</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        // Verificar autenticación - solo logística y admin
+        if (!HalleyCol.auth.requireRole('admin', 'logistica')) {
+            window.location.href = '/unauthorized';
+        }
+
+        const user = HalleyCol.auth.getCurrentUser();
+        HalleyCol.ui.initSidebar();
+
+        // Cargar pedidos
+        async function loadOrders() {
+            try {
+                const data = await HalleyCol.api.request('/orders');
+                updateStats(data.orders);
+                renderOrdersWithFilter(data.orders);
+            } catch (error) {
+                HalleyCol.ui.showAlert('alertContainer', 'Error cargando pedidos', 'error');
+            }
+        }
+
+        function updateStats(orders) {
+            const stats = {
+                'Pendiente': 0,
+                'Pendiente Validacion': 0,
+                'Pendiente Despacho': 0,
+                'Pagado': 0,
+                'Enviado': 0,
+                'Entregado': 0,
+                'Rechazado': 0,
+            };
+            
+            orders.forEach(o => {
+                if (stats[o.estado] !== undefined) stats[o.estado]++;
+            });
+
+            document.getElementById('statPendientes').textContent = stats['Pendiente'] + stats['Pendiente Validacion'] + stats['Pendiente Despacho'];
+            document.getElementById('statEnviados').textContent = stats['Enviado'];
+            document.getElementById('statEntregados').textContent = stats['Entregado'];
+            document.getElementById('statRechazados').textContent = stats['Rechazado'];
+        }
+
+        function renderOrdersWithFilter(orders) {
+            const filter = document.getElementById('filterEstado').value;
+            const filtered = filter ? orders.filter(o => o.estado === filter) : orders;
+            
+            if (filtered.length === 0) {
+                document.getElementById('pedidosContainer').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <h3>No hay pedidos</h3>
+                        <p>${filter ? 'No hay pedidos con este estado' : 'Los pedidos aparecerán aquí cuando se realicen compras'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const container = document.getElementById('pedidosContainer');
+            container.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Orden</th>
+                            <th>Cliente</th>
+                            <th>Ciudad</th>
+                            <th>Productos</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                            <th>Guía</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filtered.map(o => `
+                            <tr>
+                                <td><strong>${o.numero_orden}</strong></td>
+                                <td>${o.cliente_nombre}<br><small style="color: var(--gray);">${o.cliente_whatsapp}</small></td>
+                                <td>${o.ciudad || 'N/A'}</td>
+                                <td>${o.productos}</td>
+                                <td><strong>${HalleyCol.ui.formatCurrency(o.total)}</strong></td>
+                                <td><span class="badge ${HalleyCol.ui.getBadgeForStatus(o.estado)}">${o.estado}</span></td>
+                                <td>${o.guia_tracker || '<span style="color: var(--gray);">Sin guía</span>'}</td>
+                                <td>${HalleyCol.ui.formatRelativeTime(o.created_at)}</td>
+                                <td><button class="btn-secondary" onclick="openOrderModal('${o.id}')" style="padding: 6px 12px; font-size: 12px;">Editar</button></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        document.getElementById('filterEstado').addEventListener('change', () => loadOrders());
+
+        let currentOrders = [];
+        
+        async function openOrderModal(orderId) {
+            try {
+                const data = await HalleyCol.api.request('/orders');
+                const order = data.orders.find(o => o.id === orderId);
+                if (!order) return;
+
+                currentOrders = data.orders;
+                
+                document.getElementById('orderId').value = order.id;
+                document.getElementById('orderNumero').value = order.numero_orden;
+                document.getElementById('orderCliente').value = `${order.cliente_nombre} (${order.cliente_whatsapp})`;
+                document.getElementById('orderProductos').value = order.productos;
+                document.getElementById('orderTotal').value = HalleyCol.ui.formatCurrency(order.total);
+                document.getElementById('orderEstado').value = order.estado;
+                document.getElementById('orderGuia').value = order.guia_tracker || '';
+                
+                let logistica = '';
+                if (order.guia_tracker && order.guia_tracker.includes(':')) {
+                    logistica = order.guia_tracker.split(':')[0].trim();
+                }
+                document.getElementById('orderLogistica').value = logistica;
+                
+                document.getElementById('orderModal').classList.add('active');
+            } catch (error) {
+                HalleyCol.ui.showAlert('alertContainer', 'Error cargando pedido', 'error');
+            }
+        }
+
+        function closeOrderModal() {
+            document.getElementById('orderModal').classList.remove('active');
+        }
+
+        async function saveOrder() {
+            const orderId = document.getElementById('orderId').value;
+            const estado = document.getElementById('orderEstado').value;
+            const guia = document.getElementById('orderGuia').value;
+            const logistica = document.getElementById('orderLogistica').value;
+
+            const updateData = { estado };
+            if (guia) {
+                updateData.guia_tracker = logistica ? `${logistica}: ${guia}` : guia;
+            }
+
+            try {
+                await HalleyCol.api.request(`/orders/${orderId}`, {
+                    method: 'PATCH',
+                    body: JSON.stringify(updateData),
+                });
+                
+                HalleyCol.ui.showAlert('alertContainer', 'Pedido actualizado exitosamente', 'success');
+                closeOrderModal();
+                loadOrders();
+            } catch (error) {
+                HalleyCol.ui.showAlert('alertContainer', 'Error actualizando pedido: ' + error.message, 'error');
+            }
+        }
+
+        loadOrders();
+    </script>
+</body>
+</html>

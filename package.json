@@ -1,0 +1,43 @@
+{
+  "name": "halleycol-ia",
+  "version": "1.0.0",
+  "description": "Módulo de Inteligencia Artificial — HalleyCol Tienda de Calzado",
+  "main": "src/ia/index.ts",
+  "scripts": {
+    "start:ui": "ts-node --project tsconfig.ia.json src/test-ui/server.ts",
+    "test:ia": "ts-node --project tsconfig.ia.json src/ia/tests/RegexClassifier.test.ts",
+    "test:ia:jest": "jest src/ia/tests",
+    "build:ia": "tsc --project tsconfig.ia.json",
+    "generate-dataset": "ts-node --project tsconfig.ia.json src/ia/scripts/generate-dataset.ts"
+  },
+  "keywords": [
+    "chatbot",
+    "ia",
+    "halleycol",
+    "calzado"
+  ],
+  "author": "HalleyCol Dev Team",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^20.19.39",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@types/dotenv": "^6.1.1",
+    "@types/pg": "^8.20.0",
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.20.0"
+  }
+}

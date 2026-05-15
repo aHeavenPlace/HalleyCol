@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - HalleyCol CRM</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="/img/logo.png" alt="HalleyCol">
+                </div>
+                <div class="sidebar-brand">
+                    <h1>HalleyCol</h1>
+                    <p>CRM System</p>
+                </div>
+            </div>
+
+            <div class="sidebar-user">
+                <div class="sidebar-user-role">ADMIN</div>
+                <div class="sidebar-user-name">Usuario</div>
+            </div>
+
+            <nav>
+                <ul class="sidebar-nav">
+                    <li><a href="/dashboard" class="active">📊 Dashboard</a></li>
+                    <li><a href="/productos">📦 Productos</a></li>
+                    <li><a href="/pedidos">📋 Pedidos</a></li>
+                    <li><a href="/conversaciones">💬 Conversaciones</a></li>
+                    <li><a href="/clientes">👥 Clientes</a></li>
+                    <li><a href="/reportes">📈 Reportes</a></li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-logout">
+                <a href="#" onclick="HalleyCol.auth.logout(); return false;">
+                    🚪 Cerrar Sesión
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Dashboard</h1>
+                    <p class="page-subtitle">Resumen general del negocio</p>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-icon primary">📦</div>
+                    <div class="stat-content">
+                        <h3 id="statPedidos">-</h3>
+                        <p>Total Pedidos</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon success">💰</div>
+                    <div class="stat-content">
+                        <h3 id="statVentasHoy">-</h3>
+                        <p>Ventas Hoy</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon warning">👥</div>
+                    <div class="stat-content">
+                        <h3 id="statClientes">-</h3>
+                        <p>Clientes Únicos</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon danger">💬</div>
+                    <div class="stat-content">
+                        <h3 id="statConversaciones">-</h3>
+                        <p>Conversaciones</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pedidos por Estado -->
+            <div class="table-container">
+                <div class="table-header">
+                    <h2>📊 Pedidos por Estado</h2>
+                </div>
+                <div id="pedidosEstadoContainer">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pedidos Recientes -->
+            <div class="table-container" style="margin-top: 20px;">
+                <div class="table-header">
+                    <h2>📋 Pedidos Recientes</h2>
+                    <div class="table-actions">
+                        <a href="/pedidos" class="btn-primary"
+                            style="padding: 8px 16px; border-radius: 8px; text-decoration: none; font-size: 13px;">Ver
+                            todos</a>
+                    </div>
+                </div>
+                <div id="pedidosRecientesContainer">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        // Verificar autenticación y rol - solo admin y ventas
+        if (!HalleyCol.auth.requireRole('admin', 'ventas')) {
+            // Redirigir al dashboard correspondiente según el rol
+            const user = HalleyCol.auth.getCurrentUser();
+            if (user.role === 'logistica') {
+                window.location.href = '/dashboard-logistica';
+            } else if (user.role === 'asesor') {
+                window.location.href = '/dashboard-asesor';
+            } else {
+                window.location.href = '/unauthorized';
+            }
+        }
+
+        // Inicializar sidebar
+        HalleyCol.ui.initSidebar();
+
+        // Cargar datos del dashboard
+        async function loadDashboard() {
+            try {
+                const data = await HalleyCol.api.request('/dashboard');
+
+                // Actualizar stats
+                const totalPedidos = data.data.estados.reduce((sum, e) => sum + parseInt(e.count), 0);
+                document.getElementById('statPedidos').textContent = totalPedidos;
+                document.getElementById('statVentasHoy').textContent = HalleyCol.ui.formatCurrency(data.data.ventas_hoy);
+                document.getElementById('statClientes').textContent = '-';
+                document.getElementById('statConversaciones').textContent = '-';
+
+                // Pedidos por estado
+                const estadosHtml = data.data.estados.map(e => `
+                    <div style="padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                        <span><span class="badge ${HalleyCol.ui.getBadgeForStatus(e.estado)}">${e.estado}</span></span>
+                        <strong>${e.count}</strong>
+                    </div>
+                `).join('');
+                document.getElementById('pedidosEstadoContainer').innerHTML = estadosHtml || '<div class="empty-state"><p>No hay pedidos</p></div>';
+
+                // Pedidos recientes
+                if (data.data.pedidos_recientes && data.data.pedidos_recientes.length > 0) {
+                    HalleyCol.ui.renderOrdersTable(data.data.pedidos_recientes, 'pedidosRecientesContainer');
+                } else {
+                    document.getElementById('pedidosRecientesContainer').innerHTML = '<div class="empty-state"><p>No hay pedidos recientes</p></div>';
+                }
+
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                HalleyCol.ui.showAlert('statsGrid', 'Error cargando el dashboard', 'error');
+            }
+        }
+
+        loadDashboard();
+    </script>
+</body>
+
+</html>

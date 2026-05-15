@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HalleyCol WhatsApp IA Tester</title>
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/chatbot.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <main class="chat-container">
+            <header class="chat-header">
+                <div class="contact-info">
+                    <div class="avatar">
+                        <img src="/img/logo.png" alt="HalleyCol"
+                            onerror="this.src='https://ui-avatars.com/api/?name=HC&background=00a884&color=fff&rounded=true'">
+                    </div>
+                    <div class="brand">
+                        <h1>HalleyCol</h1>
+                        <p class="status">en línea</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-icon" title="Reiniciar"><i class="fa-solid fa-rotate-right"></i></button>
+                </div>
+            </header>
+
+            <div id="messagesContainer" class="chat-box">
+            </div>
+
+            <div class="chat-input-area">
+                <button class="btn-icon"><i class="fa-regular fa-face-smile"></i></button>
+                <button class="btn-icon"><i class="fa-solid fa-paperclip"></i></button>
+                <form id="chatForm">
+                    <input type="text" id="userInput" placeholder="Escribe un mensaje" autocomplete="off">
+                    <button type="submit" id="sendBtn"><i class="fa-solid fa-paper-plane"></i></button>
+                </form>
+                <button class="btn-icon mic-btn"><i class="fa-solid fa-microphone"></i></button>
+            </div>
+        </main>
+
+        <aside class="debug-panel">
+            <div class="panel-header">
+                <h2><i class="fa-solid fa-microchip"></i> IA Debugger</h2>
+                <span class="status-badge pulse">Conectado</span>
+            </div>
+            <div class="debug-card">
+                <h3>Intención</h3>
+                <div id="debug-intent" class="debug-value">Ninguna</div>
+                <h3>Confianza</h3>
+                <div class="progress-bar">
+                    <div id="debug-confidence" class="progress-fill" style="width: 0%;"></div>
+                </div>
+                <div id="debug-confidence-text" class="text-right text-small">0%</div>
+                <h3>Entidades</h3>
+                <pre id="debug-entities" class="json-viewer">{}</pre>
+                <h3>Historial</h3>
+                <pre id="debug-history" class="json-viewer">[]</pre>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        const SESSION_ID = 'chatbot_' + Date.now();
+
+        const chatForm = document.getElementById('chatForm');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const messagesContainer = document.getElementById('messagesContainer');
+        const clearBtn = document.querySelector('.btn-icon[title="Reiniciar"]');
+
+        const debugIntent = document.getElementById('debug-intent');
+        const debugConfidence = document.getElementById('debug-confidence');
+        const debugEntities = document.getElementById('debug-entities');
+        const debugHistory = document.getElementById('debug-history');
+
+        function addMessage(text, sender) {
+            const time = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender === 'user' ? 'user' : 'system'}`;
+            messageDiv.innerHTML = `<div class="bubble"><span class="message-text">${text}</span> <span class="timestamp">${time}</span></div>`;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function updateDebug(data) {
+            if (debugIntent) debugIntent.textContent = data.intent || 'Ninguna';
+            if (debugConfidence) {
+                const confidence = (data.confidence || 0) * 100;
+                debugConfidence.style.width = confidence + '%';
+                document.getElementById('debug-confidence-text').textContent = Math.round(confidence) + '%';
+            }
+            if (debugEntities) debugEntities.textContent = JSON.stringify(data.entities || {}, null, 2);
+            if (debugHistory) debugHistory.textContent = JSON.stringify(data.context?.history?.slice(0, 5) || [], null, 2);
+        }
+
+        async function sendMessage(message) {
+            if (!message.trim()) return;
+            addMessage(message, 'user');
+            userInput.value = '';
+
+            try {
+                const response = await fetch(`${API_BASE}/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message, sessionId: SESSION_ID }),
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    addMessage(data.reply, 'bot');
+                    if (data.debug) updateDebug(data.debug);
+                } else {
+                    addMessage('Error: ' + (data.error || 'Error interno'), 'bot');
+                }
+            } catch (error) {
+                addMessage('Error de conexión', 'bot');
+            }
+        }
+
+        chatForm.addEventListener('submit', (e) => { e.preventDefault(); sendMessage(userInput.value); });
+
+        clearBtn.addEventListener('click', () => { messagesContainer.innerHTML = ''; location.reload(); });
+
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                addMessage('¡Hola! Soy el asistente virtual de HalleyCol 👋. ¿En qué te puedo ayudar hoy? (Ej: "¿Tienen botas en talla 38?" o "Quiero hablar con un humano")', 'bot');
+            }, 500);
+        });
+    </script>
+</body>
+
+</html>

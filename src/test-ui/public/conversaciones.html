@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversaciones - HalleyCol CRM</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="/img/logo.png" alt="HalleyCol">
+                </div>
+                <div class="sidebar-brand">
+                    <h1>HalleyCol</h1>
+                    <p>CRM System</p>
+                </div>
+            </div>
+
+            <div class="sidebar-user">
+                <div class="sidebar-user-role">ROLE</div>
+                <div class="sidebar-user-name">Usuario</div>
+            </div>
+
+            <nav>
+                <ul class="sidebar-nav" id="sidebarNav"></ul>
+            </nav>
+
+            <div class="sidebar-logout">
+                <a href="#" onclick="HalleyCol.auth.logout(); return false;">🚪 Cerrar Sesión</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">💬 Conversaciones</h1>
+                    <p class="page-subtitle">Chatbot WhatsApp - Historial de conversaciones</p>
+                </div>
+            </div>
+
+            <div id="alertContainer"></div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <!-- Lista de conversaciones -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <h2>Conversaciones</h2>
+                    </div>
+                    <div id="conversacionesContainer" style="max-height: 70vh; overflow-y: auto;">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mensajes de la conversación seleccionada -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <h2 id="chatTitle">Selecciona una conversación</h2>
+                    </div>
+                    <div id="mensajesContainer" style="max-height: 70vh; overflow-y: auto; padding: 20px;">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">💬</div>
+                            <h3>Sin mensajes</h3>
+                            <p>Selecciona una conversación para ver los mensajes</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        // Verificar autenticación y rol
+        if (!HalleyCol.auth.requireRole('admin', 'asesor', 'ventas')) {
+            window.location.href = '/unauthorized';
+        }
+
+        const user = HalleyCol.auth.getCurrentUser();
+        HalleyCol.ui.initSidebar();
+
+        // Cargar conversaciones
+        async function loadConversations() {
+            try {
+                const data = await HalleyCol.api.request('/conversations');
+                renderConversations(data.conversations);
+            } catch (error) {
+                console.error('Error loading conversations:', error);
+                HalleyCol.ui.showAlert('alertContainer', 'Error cargando conversaciones', 'error');
+            }
+        }
+
+        function renderConversations(conversations) {
+            const container = document.getElementById('conversacionesContainer');
+
+            if (!conversations || conversations.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">💬</div>
+                        <h3>No hay conversaciones</h3>
+                        <p>Las conversaciones del chatbot aparecerán aquí</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = conversations.map(c => `
+                <div onclick="loadMessages('${c.session_id}')" style="padding: 16px 20px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='var(--light)'" onmouseout="this.style.background='white'">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <strong style="font-size: 14px;">${c.cliente_whatsapp || c.session_id}</strong>
+                        ${c.necesita_asesor ? '<span class="badge badge-danger">Requiere Asesor</span>' : ''}
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--gray);">
+                        <span>Estado: ${c.estado_fsm}</span>
+                        <span>${HalleyCol.ui.formatRelativeTime(c.updated_at)}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Cargar mensajes de una conversación
+        async function loadMessages(sessionId) {
+            try {
+                document.getElementById('chatTitle').textContent = `Mensajes: ${sessionId}`;
+                document.getElementById('mensajesContainer').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+                const data = await HalleyCol.api.request(`/conversations/${sessionId}/messages`);
+                renderMessages(data.messages);
+            } catch (error) {
+                console.error('Error loading messages:', error);
+                document.getElementById('mensajesContainer').innerHTML = `
+                    <div class="empty-state">
+                        <p>Error cargando mensajes</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderMessages(messages) {
+            const container = document.getElementById('mensajesContainer');
+
+            if (!messages || messages.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">💬</div>
+                        <h3>Sin mensajes</h3>
+                        <p>Esta conversación no tiene mensajes</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = messages.map(m => `
+                <div style="margin-bottom: 12px; padding: 12px 16px; border-radius: 12px; max-width: 80%; ${m.emisor === 'user' ? 'background: var(--primary); color: white; margin-left: auto;' : 'background: var(--light);'}">
+                    <div style="font-size: 11px; opacity: 0.7; margin-bottom: 4px;">
+                        ${m.emisor === 'user' ? '👤 Usuario' : m.emisor === 'bot' ? '🤖 Bot' : '👨‍💼 Asesor'} • ${HalleyCol.ui.formatRelativeTime(m.created_at)}
+                    </div>
+                    <div style="white-space: pre-wrap; word-break: break-word;">${m.contenido}</div>
+                </div>
+            `).join('');
+        }
+
+        // Renderizar sidebar dinámico
+        const navItems = {
+            'admin': [
+                { href: '/dashboard', icon: '📊', label: 'Dashboard' },
+                { href: '/productos', icon: '📦', label: 'Productos' },
+                { href: '/pedidos', icon: '📋', label: 'Pedidos' },
+                { href: '/conversaciones', icon: '💬', label: 'Conversaciones' },
+                { href: '/clientes', icon: '👥', label: 'Clientes' },
+                { href: '/reportes', icon: '📈', label: 'Reportes' },
+            ],
+            'ventas': [
+                { href: '/dashboard', icon: '📊', label: 'Dashboard' },
+                { href: '/productos', icon: '📦', label: 'Productos' },
+                { href: '/pedidos', icon: '📋', label: 'Pedidos' },
+                { href: '/conversaciones', icon: '💬', label: 'Conversaciones' },
+                { href: '/clientes', icon: '👥', label: 'Clientes' },
+                { href: '/reportes', icon: '📈', label: 'Reportes' },
+            ],
+            'asesor': [
+                { href: '/dashboard-asesor', icon: '💬', label: 'Mis Conversaciones' },
+            ],
+        };
+
+        const nav = document.getElementById('sidebarNav');
+        const items = navItems[user.role] || navItems['asesor'];
+        nav.innerHTML = items.map(item => `
+            <li><a href="${item.href}" class="${window.location.pathname === item.href ? 'active' : ''}">${item.icon} ${item.label}</a></li>
+        `).join('');
+
+        loadConversations();
+    </script>
+</body>
+
+</html>

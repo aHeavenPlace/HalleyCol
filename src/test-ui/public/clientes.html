@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clientes - HalleyCol CRM</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="/img/logo.png" alt="HalleyCol">
+                </div>
+                <div class="sidebar-brand">
+                    <h1>HalleyCol</h1>
+                    <p>CRM System</p>
+                </div>
+            </div>
+            <div class="sidebar-user">
+                <div class="sidebar-user-role">ROLE</div>
+                <div class="sidebar-user-name">Usuario</div>
+            </div>
+            <nav>
+                <ul class="sidebar-nav" id="sidebarNav"></ul>
+            </nav>
+            <div class="sidebar-logout">
+                <a href="#" onclick="HalleyCol.auth.logout(); return false;">🚪 Cerrar Sesión</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">👥 Clientes</h1>
+                    <p class="page-subtitle">Base de datos de clientes y sus compras</p>
+                </div>
+            </div>
+            <div id="alertContainer"></div>
+            <div class="table-container">
+                <div class="table-header">
+                    <h2>Clientes</h2>
+                </div>
+                <div id="clientesContainer">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="/js/app.js"></script>
+    <script>
+        if (!HalleyCol.auth.requireRole('admin', 'ventas')) window.location.href = '/unauthorized';
+        const user = HalleyCol.auth.getCurrentUser();
+        HalleyCol.ui.initSidebar();
+
+        async function loadClients() {
+            try {
+                const data = await HalleyCol.api.request('/clients');
+                const container = document.getElementById('clientesContainer');
+                if (!data.clients || data.clients.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">👥</div><h3>No hay clientes</h3><p>Los clientes aparecerán cuando realicen pedidos</p></div>';
+                    return;
+                }
+                container.innerHTML = `<table><thead><tr><th>Cliente</th><th>WhatsApp</th><th>Compras</th><th>Total Gastado</th><th>Última Compra</th></tr></thead><tbody>${data.clients.map(c => `<tr><td><strong>${c.nombre || 'N/A'}</strong></td><td>${c.id}</td><td>${c.compras}</td><td><strong>${HalleyCol.ui.formatCurrency(c.total_gastado)}</strong></td><td>${HalleyCol.ui.formatRelativeTime(c.ultima_compra)}</td></tr>`).join('')}</tbody></table>`;
+            } catch (error) {
+                HalleyCol.ui.showAlert('alertContainer', 'Error cargando clientes', 'error');
+            }
+        }
+
+        const navItems = {
+            'admin': [{ href: '/dashboard', icon: '📊', label: 'Dashboard' }, { href: '/productos', icon: '📦', label: 'Productos' }, { href: '/pedidos', icon: '📋', label: 'Pedidos' }, { href: '/conversaciones', icon: '💬', label: 'Conversaciones' }, { href: '/clientes', icon: '👥', label: 'Clientes' }, { href: '/reportes', icon: '📈', label: 'Reportes' }],
+            'ventas': [{ href: '/dashboard', icon: '📊', label: 'Dashboard' }, { href: '/productos', icon: '📦', label: 'Productos' }, { href: '/pedidos', icon: '📋', label: 'Pedidos' }, { href: '/clientes', icon: '👥', label: 'Clientes' }, { href: '/reportes', icon: '📈', label: 'Reportes' }],
+        };
+        document.getElementById('sidebarNav').innerHTML = (navItems[user.role] || navItems['ventas']).map(item => `<li><a href="${item.href}" class="${window.location.pathname === item.href ? 'active' : ''}">${item.icon} ${item.label}</a></li>`).join('');
+        loadClients();
+    </script>
+</body>
+
+</html>
