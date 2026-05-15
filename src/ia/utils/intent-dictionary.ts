@@ -204,3 +204,53 @@ export const humanRequestPhrases: string[] = [
   'necesito hablar con alguien', 'que me llame alguien', 'asesor por favor',
   'agente real', 'persona real', 'no quiero hablar con un bot',
 ];
+
+/**
+ * Palabras clave del dominio HalleyCol (calzado, tienda, envíos, pagos).
+ * Si el texto NO contiene ninguna de estas palabras, se considera fuera de dominio.
+ */
+export const domainKeywords: string[] = [
+  // Calzado y productos
+  'zapato', 'zapatilla', 'tenis', 'bota', 'bota', 'tacón', 'taco', 'tacos', 'tacones',
+  'sandalias', 'mocasín', 'mocasines', 'botines', 'calzado', 'zapatillas', 'suela',
+  'talla', 'número', 'medida', 'color', 'modelo', 'marca', 'nike', 'adidas', 'crocs',
+  'ugg', 'birkenstock', 'vans', 'converse', 'dr martens', 'air max', 'ultraboost',
+  'classic', 'suede', '1460', 'arizona', 'ankle', 'classics', 'air force', 'old skool',
+  'chuck taylor', 'clog', 'stessy',
+
+  // Compras y pedidos
+  'comprar', 'precio', 'valor', 'costo', 'cuánto', 'cuanto', 'pedido', 'orden', 'compra',
+  'catálogo', 'catalogo', 'productos', 'colección', 'coleccion', 'tienda', 'inventario',
+  'disponible', 'stock', 'existen', 'tienen', 'hay', 'ver', 'mostrar', 'quiero', 'llevo',
+
+  // Pagos
+  'pago', 'pagar', 'nequi', 'daviplata', 'transferencia', 'efectivo', 'contraentrega',
+  'contra entrega', 'tarjeta', 'débito', 'debito', 'crédito', 'credito', 'comprobante',
+  'recibo', 'consignar', 'consignación', 'cuenta', 'breb',
+
+  // Envíos y ubicación
+  'envío', 'envio', 'despacho', 'domicilio', 'rastreo', 'tracking', 'guía', 'guia',
+  'ciudad', 'dirección', 'direccion', 'barrio', 'departamento', 'país', 'pais',
+  'bucaramanga', 'bogotá', 'bogota', 'medellín', 'medellin', 'cali', 'barranquilla',
+  'cartagena', 'giron', 'girón', 'floridablanca', 'piedecuesta', 'lebrija',
+
+  // Servicio al cliente
+  'asesor', 'ayuda', 'servicio', 'atención', 'humano', 'persona', 'agente', 'bot',
+  'chat', 'mensaje', 'responder', 'consulta', 'pregunta', 'información', 'info',
+
+  // Estados y condiciones
+  'nuevo', 'usado', 'original', 'garantía', 'garantia', 'devolución', 'devolucion',
+  'reembolso', 'cambio', 'reclamo', 'queja', 'felicitaciones', 'recomendación',
+];
+
+/**
+ * Verifica si un texto está relacionado con el dominio de HalleyCol.
+ * @param text - Texto del usuario (sin normalizar)
+ * @returns true si el texto parece relacionado con calzado/tienda, false si es fuera de dominio
+ */
+export function isDomainRelated(text: string): boolean {
+  const normalized = text.toLowerCase();
+
+  // Verificar si contiene alguna palabra clave del dominio
+  return domainKeywords.some(keyword => normalized.includes(keyword.toLowerCase()));
+}

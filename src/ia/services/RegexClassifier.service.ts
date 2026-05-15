@@ -22,6 +22,7 @@ import { interpolate, responseTemplates, businessConfig } from '../utils/respons
 import { ConversationContextService } from './ConversationContext.service';
 import { GeminiClassifier } from './GeminiClassifier.service';
 import { InventoryService } from './Inventory.service';
+import { isDomainRelated } from '../utils/intent-dictionary';
 
 /**
  * Configuración del RegexClassifier.
@@ -87,6 +88,17 @@ export class RegexClassifier implements IAService {
   ): Promise<IntentResult> {
     const normalized = this.normalizeText(text);
 
+    // Verificar si el texto está fuera del dominio de HalleyCol
+    if (!isDomainRelated(text)) {
+      return {
+        intent: 'otro',
+        confidence: 1.0,
+        entities: {},
+        rawText: text,
+        fallbackResponse: 'Lo siento, solo puedo responder preguntas relacionadas con HalleyCol, nuestra tienda de calzado femenino. ¿En qué puedo ayudarte con respecto a nuestros productos, envíos o pagos? 👠',
+      };
+    }
+
     let bestIntent: KnownIntent = 'otro';
     let bestConfidence = 0.0;
 
@@ -125,8 +137,8 @@ export class RegexClassifier implements IAService {
       const geminiResp = await this.geminiClassifier.generateResponse(text, contextSafe);
       fallbackResponse = geminiResp.text;
       if (geminiResp.buttons && geminiResp.buttons.length > 0) {
-         // store buttons in entities as a hack to pass them
-         (entities as any)['geminiButtons'] = geminiResp.buttons;
+        // store buttons in entities as a hack to pass them
+        (entities as any)['geminiButtons'] = geminiResp.buttons;
       }
     }
 
@@ -164,20 +176,20 @@ export class RegexClassifier implements IAService {
         buttons: lastHistory.entities['geminiButtons'] || []
       };
     }
-    
+
     // 0.5 Interceptar ver_catalogo para hacerlo dinámico
     if (knownIntent === 'ver_catalogo') {
       const allProducts = await this.inventoryService.getAllProducts();
       const topProducts = allProducts.slice(0, 4);
       const productList = topProducts.map(p => `• **${p.name}** (${p.brand}) - $${p.price.toLocaleString('es-CO')}`).join('\n');
       const topNames = topProducts.map(p => p.name.split(' ')[0] || p.name);
-      
+
       return {
         text: `¡Claro! 👠 Aquí tienes algunos de nuestros productos estrella de la nueva colección:\n\n${productList}\n\nDime cuál te gusta (ej: "Quiero ${topNames[0]}") para revisar tallas.`,
         buttons: topNames
       };
     }
-    
+
     // 0.6 Interceptar consulta_talla para hacerlo dinámico
     if (knownIntent === 'consulta_talla' && (context.fsmState === 'IDLE' || context.fsmState === 'AWAITING_SIZE')) {
       const sizeEntity = context.history[0]?.entities['talla'];
@@ -192,7 +204,7 @@ export class RegexClassifier implements IAService {
           };
         }
       }
-      
+
       // Si veníamos hablando con Gemini y este sugirió ver tallas, dejamos que Gemini responda
       if (context.history.length > 1 && context.history[1].fallbackResponse) {
         const rawText = context.history[0]?.rawText || intent;
@@ -217,7 +229,7 @@ ${historyText}
 
 Devuelve ÚNICAMENTE un JSON válido con este formato, sin markdown ni comillas invertidas:
 {"product": "Resumen de lo que compra (ej: 12 Crocs Talla 39 y 4 Talla 38)", "totalPrice": 150000}`;
-          
+
           const extractResult = await this.geminiClassifier.geminiClient.generateContent(prompt);
           const rawExtract = extractResult.response.text();
           const jsonMatch = rawExtract.match(/\{[\s\S]*\}/);
@@ -230,7 +242,7 @@ Devuelve ÚNICAMENTE un JSON válido con este formato, sin markdown ni comillas 
           console.error('[RegexClassifier] Error extracting order details with Gemini:', error);
         }
       }
-      
+
       context.fsmState = 'AWAITING_CITY';
       return {
         text: `¡Perfecto! Vamos a procesar tu orden${context.selectedProduct ? ` por ${context.selectedProduct}` : ''}.\n\nPara calcular el costo de envío y darte el total exacto de tu compra, ¿En qué ciudad te encuentras?`,
@@ -249,7 +261,7 @@ Devuelve ÚNICAMENTE un JSON válido con este formato, sin markdown ni comillas 
     if (knownIntent === 'consulta_categoria') {
       const categoryQuery = context.history[0]?.entities['producto'] || intent;
       const rawText = context.history[0]?.rawText || '';
-      
+
       // Intentamos extraer de la intención si no hay entidad
       let categoryMatch = categoryQuery;
       if (!context.history[0]?.entities['producto']) {
@@ -260,11 +272,11 @@ Devuelve ÚNICAMENTE un JSON válido con este formato, sin markdown ni comillas 
       if (categoryMatch) {
         const allProducts = await this.inventoryService.getAllProducts();
         const products = allProducts.filter(p => p.category.toLowerCase() === categoryMatch!.toLowerCase());
-        
+
         if (products.length > 0) {
           const productList = products.map(p => `- ${p.name} (${p.brand}) - $${p.price.toLocaleString('es-CO')}`).join('\n');
           const productNames = products.map(p => p.name.split(' ')[0] || p.name); // Para los botones
-          
+
           context.fsmState = 'IDLE'; // Permite que elija el modelo y entre a 'seleccionar_producto'
           return {
             text: `¡Sí, claro! En la categoría de ${categoryMatch} tenemos disponibles los siguientes modelos:\n\n${productList}\n\nDime cuáles te interesan para mostrarte las tallas.`,
@@ -278,7 +290,7 @@ Devuelve ÚNICAMENTE un JSON válido con este formato, sin markdown ni comillas 
     if (knownIntent === 'seleccionar_producto') {
       const productEntity = context.history[0]?.entities['productoEspecifico'];
       const allProducts = await this.inventoryService.getAllProducts();
-      
+
       if (!productEntity) {
         const topProducts = allProducts.slice(0, 4);
         const topNames = topProducts.map(p => p.name);
@@ -287,9 +299,9 @@ Devuelve ÚNICAMENTE un JSON válido con este formato, sin markdown ni comillas 
           buttons: topNames.map(name => name.split(' ')[0])
         };
       }
-      
+
       const product = allProducts.find(p => p.name.toLowerCase().includes(productEntity.toLowerCase()) || productEntity.toLowerCase().includes(p.name.toLowerCase()));
-      
+
       if (product) {
         context.selectedProduct = product.name;
         context.selectedPrice = product.price;
@@ -321,7 +333,7 @@ Devuelve ÚNICAMENTE un JSON válido con este formato, sin markdown ni comillas 
       const rawText = context.history[0]?.rawText || intent;
       const cityEntity = context.history[0]?.entities['ciudad'];
       const city = cityEntity || rawText.trim(); // Tomar entidad o texto libre como "fallback"
-      
+
       context.selectedCity = city;
       const normalized = city.toLowerCase();
 
@@ -367,7 +379,7 @@ Devuelve ÚNICAMENTE un JSON válido con este formato, sin markdown ni comillas 
           context.selectedPayment = 'Transferencia';
           account = `nuestra cuenta **BreB/Transferencia: ${businessConfig.llaveBreb}**`;
         }
-        
+
         context.fsmState = 'AWAITING_RECEIPT_AND_CONTACT';
         return {
           text: `Perfecto. Por favor, transfiere el valor total a ${account}.\n\n📸 **Adjunta aquí la captura de tu comprobante de pago**, y en el mensaje incluye tu nombre completo, dirección exacta de envío y tu número celular, **separados por comas** (ej: Juan Pérez, Calle 1 #2-3, 3001234567):`,
@@ -529,7 +541,7 @@ Devuelve ÚNICAMENTE un JSON válido con este formato, sin markdown ni comillas 
     const below = result.confidence < this.confidenceThreshold ? ' ⚠️ BAJO UMBRAL' : '';
     console.log(
       `[RegexClassifier] "${originalText.substring(0, 60)}..." ` +
-        `→ ${result.intent} (${(result.confidence * 100).toFixed(1)}%)${below}`
+      `→ ${result.intent} (${(result.confidence * 100).toFixed(1)}%)${below}`
     );
   }
 }
