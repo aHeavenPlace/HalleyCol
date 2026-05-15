@@ -241,6 +241,11 @@ export const domainKeywords: string[] = [
   // Estados y condiciones
   'nuevo', 'usado', 'original', 'garantía', 'garantia', 'devolución', 'devolucion',
   'reembolso', 'cambio', 'reclamo', 'queja', 'felicitaciones', 'recomendación',
+
+  // Saludos y despedidas (siempre son válidos en el contexto del chatbot)
+  'hola', 'buenas', 'buenos días', 'buenos dias', 'buenas tardes', 'buenas noches',
+  'hey', 'hi', 'hello', 'saludos', 'qué tal', 'que tal', 'adiós', 'adios', 'hasta luego',
+  'bye', 'chao', 'chau', 'gracias', 'listo',
 ];
 
 /**
