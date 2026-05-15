@@ -98,8 +98,9 @@ const sessions: Record<string, ConversationContext> = {};
 
 app.post('/api/chat', async (req, res) => {
   try {
-    console.log('[Chat] Request received:', { message, sessionId });
     const { message, image, sessionId = 'test_session' } = req.body;
+
+    console.log('[Chat] Request received:', { message, sessionId });
 
     if (!message && !image) {
       return res.status(400).json({ error: 'Message or image is required' });
