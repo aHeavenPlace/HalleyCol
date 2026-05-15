@@ -15,6 +15,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Debug: Log database config (sin exponer password)
+console.log('[DB Config] Host:', process.env.PGHOST || 'localhost');
+console.log('[DB Config] Database:', process.env.PGDATABASE);
+console.log('[DB Config] User:', process.env.PGUSER);
+console.log('[DB Config] Port:', process.env.PGPORT || 5432);
+
 // Configuración de la base de datos compartida
 const pool = new Pool({
   host: process.env.PGHOST || 'localhost',
@@ -22,6 +28,7 @@ const pool = new Pool({
   user: process.env.PGUSER || 'postgres',
   password: process.env.PGPASSWORD || '12345678',
   database: process.env.PGDATABASE || 'halleycol_db',
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 app.locals.pool = pool;
 
