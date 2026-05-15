@@ -18,7 +18,10 @@
       "Bash(del *)",
       "Bash(get-process *)",
       "Bash(stop-process *)",
-      "Bash(git init)"
+      "Bash(git init)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git remote *)"
     ]
   },
   "$version": 4
