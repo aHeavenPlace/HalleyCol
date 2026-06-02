@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+import { Pool, PoolClient } from 'pg';
 import * as dotenv from 'dotenv';
 
 // Local Product type to avoid import issues
@@ -14,13 +14,20 @@ export interface Product {
 
 dotenv.config();
 
+const isRemote = process.env.PGHOST && !process.env.PGHOST.includes('localhost');
+
 const pool = new Pool({
   host: process.env.PGHOST || 'localhost',
   port: Number(process.env.PGPORT) || 5432,
   user: process.env.PGUSER || 'postgres',
   password: process.env.PGPASSWORD || '12345678',
-  database: process.env.PGDATABASE || 'halleycol_db',
-  ssl: true, // Render DB requiere SSL
+  database: process.env.PGDATABASE || 'vekas_db',
+  ssl: isRemote ? true : false, // SSL solo para bases de datos remotas (Render)
+});
+
+// Evitar que errores en clientes inactivos maten el proceso (Solución a ECONNRESET)
+pool.on('error', (err) => {
+  console.error('[InventoryService] Unexpected error on idle client', err);
 });
 
 // Productos mock de fallback por si la DB no está disponible
@@ -35,58 +42,63 @@ const FALLBACK_PRODUCTS: Product[] = [
 
 export class InventoryService {
   /**
-   * Obtiene todos los productos con su stock.
-   * Si la DB falla, retorna productos mock de fallback.
+   * Helper para ejecutar consultas de forma segura asegurando la liberación del cliente.
    */
-  async getAllProducts(): Promise<Product[]> {
+  private async executeQuery<T>(queryFn: (client: PoolClient) => Promise<T>, fallback: T): Promise<T> {
     const client = await pool.connect().catch(() => null);
     if (!client) {
-      console.warn('[InventoryService] DB connection failed, using fallback products');
-      return FALLBACK_PRODUCTS;
+      console.warn('[InventoryService] DB connection failed, using fallback');
+      return fallback;
     }
 
     try {
-      const res = await client.query('SELECT * FROM productos');
-      const products = res.rows.map((row: any) => ({
-        id: row.id,
-        name: row.name,
-        brand: row.brand,
-        price: row.price,
-        category: row.category,
-        availableSizes: row.available_sizes,
-        stock: row.stock,
-      } as Product));
-
-      return products.length > 0 ? products : FALLBACK_PRODUCTS;
+      return await queryFn(client);
     } catch (error) {
-      console.error('[InventoryService] Error fetching products, using fallback:', error);
-      return FALLBACK_PRODUCTS;
+      console.error('[InventoryService] Query error:', error);
+      return fallback;
     } finally {
       client.release();
     }
   }
 
   /**
+   * Obtiene todos los productos con su stock.
+   * Si la DB falla, retorna productos mock de fallback.
+   */
+  async getAllProducts(): Promise<Product[]> {
+    return this.executeQuery(async (client) => {
+      const res = await client.query('SELECT * FROM productos');
+      const products = res.rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        brand: row.brand,
+        price: row.price,
+        category: row.category,
+        availableSizes: row.available_sizes || [],
+        stock: row.stock,
+      } as Product));
+      return products.length > 0 ? products : FALLBACK_PRODUCTS;
+    }, FALLBACK_PRODUCTS);
+  }
+
+  /**
    * Busca producto por id.
    */
   async getProductById(id: string): Promise<Product | undefined> {
-    const client = await pool.connect();
-    try {
+    return this.executeQuery(async (client) => {
       const res = await client.query('SELECT * FROM productos WHERE id = $1', [id]);
       if (res.rowCount === 0) return undefined;
-      const row: any = res.rows[0];
+      const row = res.rows[0];
       return {
         id: row.id,
         name: row.name,
         brand: row.brand,
         price: row.price,
         category: row.category,
-        availableSizes: row.available_sizes,
+        availableSizes: row.available_sizes || [],
         stock: row.stock,
       } as Product;
-    } finally {
-      client.release();
-    }
+    }, undefined);
   }
 
   /**
@@ -103,16 +115,13 @@ export class InventoryService {
    * Total de pares disponibles de una categoría y talla.
    */
   async getTotalBySize(category: string, size: string): Promise<number> {
-    const client = await pool.connect();
-    try {
+    return this.executeQuery(async (client) => {
       const res = await client.query(
         `SELECT SUM((stock->>$2)::int) AS total FROM productos WHERE category = $1 AND stock ? $2`,
         [category, size]
       );
       const total = res.rows[0].total;
       return total ? Number(total) : 0;
-    } finally {
-      client.release();
-    }
+    }, 0);
   }
 }

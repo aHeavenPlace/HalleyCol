@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usuarios - Vekas CRM</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="/img/logo.png" alt="Vekas">
+                </div>
+                <div class="sidebar-brand">
+                    <h1>Vekas</h1>
+                    <p>CRM System</p>
+                </div>
+            </div>
+
+            <div class="sidebar-user">
+                <div class="sidebar-user-role">ROLE</div>
+                <div class="sidebar-user-name">Usuario</div>
+            </div>
+
+            <nav>
+                <ul class="sidebar-nav" id="sidebarNav">
+                    <!-- Se llena dinámicamente según el rol -->
+                </ul>
+            </nav>
+
+            <div class="sidebar-logout">
+                <a href="#" onclick="Vekas.auth.logout(); return false;">
+                    🚪 Cerrar Sesión
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">👤 Usuarios</h1>
+                    <p class="page-subtitle">Administración de credenciales y roles del sistema</p>
+                </div>
+                <div class="table-actions">
+                    <button class="btn-primary" id="btnAddUser">+ Nuevo Usuario</button>
+                </div>
+            </div>
+
+            <div id="alertContainer"></div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid" style="margin-bottom: 30px;">
+                <div class="stat-card">
+                    <div class="stat-icon primary">👥</div>
+                    <div class="stat-content">
+                        <h3 id="statTotalUsers">-</h3>
+                        <p>Total Cuentas</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon warning">🔑</div>
+                    <div class="stat-content">
+                        <h3 id="statAdmins">-</h3>
+                        <p>Administradores</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon success">👨‍💼</div>
+                    <div class="stat-content">
+                        <h3 id="statAsesores">-</h3>
+                        <p>Asesores de Chat</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon danger">🚚</div>
+                    <div class="stat-content">
+                        <h3 id="statOtrosRoles">-</h3>
+                        <p>Logística y Ventas</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Catálogo de Usuarios -->
+            <div class="table-container glass-card">
+                <div class="table-header">
+                    <h2>Listado de Cuentas de Acceso</h2>
+                </div>
+                <div id="usuariosContainer">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Agregar/Editar Usuario -->
+    <div class="form-modal" id="userModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Nuevo Usuario</h2>
+                <button class="modal-close" onclick="closeUserModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="userForm">
+                    <input type="hidden" id="userId">
+                    
+                    <div class="form-group">
+                        <label for="userUsername">Nombre de Usuario (Login)</label>
+                        <input type="text" id="userUsername" required placeholder="Ej: ventas2" autocomplete="username">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="userRole">Rol del Sistema</label>
+                        <select id="userRole" required>
+                            <option value="">Seleccionar rol...</option>
+                            <option value="admin">Administrador (Acceso total)</option>
+                            <option value="ventas">Ventas (Catálogo, clientes y reportes)</option>
+                            <option value="logistica">Logística (Despachos y catálogo)</option>
+                            <option value="asesor">Asesor de Chat (Conversaciones y catálogo)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="userPassword" id="lblPassword">Contraseña</label>
+                        <input type="password" id="userPassword" placeholder="Clave de ingreso..." autocomplete="new-password">
+                        <small id="passwordHint" style="color: var(--gray); font-size: 11px; margin-top: 4px; display: none;">
+                            * Dejar en blanco si no deseas cambiar la clave del usuario
+                        </small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeUserModal()">Cancelar</button>
+                <button class="btn-primary" onclick="saveUser()">Guardar Usuario</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        // Enforce admin permission exclusively
+        if (!Vekas.auth.requireRole('admin')) {
+            window.location.href = '/unauthorized';
+        }
+
+        const user = Vekas.auth.getCurrentUser();
+        Vekas.ui.initSidebar();
+
+        let allUsers = [];
+
+        // Load users from Backend API
+        async function loadUsers() {
+            try {
+                const data = await Vekas.api.request('/users');
+                allUsers = data.users || [];
+                updateStats(allUsers);
+                renderUsersTable(allUsers);
+            } catch (error) {
+                console.error('Error loading users:', error);
+                Vekas.ui.showAlert('alertContainer', 'Error cargando usuarios: ' + error.message, 'error');
+            }
+        }
+
+        function updateStats(users) {
+            const total = users.length;
+            const admins = users.filter(u => u.role === 'admin').length;
+            const asesores = users.filter(u => u.role === 'asesor').length;
+            const otros = users.filter(u => u.role === 'logistica' || u.role === 'ventas').length;
+
+            document.getElementById('statTotalUsers').textContent = total;
+            document.getElementById('statAdmins').textContent = admins;
+            document.getElementById('statAsesores').textContent = asesores;
+            document.getElementById('statOtrosRoles').textContent = otros;
+        }
+
+        function renderUsersTable(users) {
+            const container = document.getElementById('usuariosContainer');
+
+            if (!users || users.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👥</div>
+                        <h3>No hay usuarios</h3>
+                        <p>Los usuarios creados aparecerán aquí</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre de Usuario</th>
+                            <th>Rol</th>
+                            <th>Permisos</th>
+                            <th style="width: 180px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${users.map(u => {
+                            let roleBadge = 'badge-gray';
+                            let roleLabel = 'Personal';
+                            let permLabel = 'General';
+
+                            if (u.role === 'admin') {
+                                roleBadge = 'badge-danger';
+                                roleLabel = 'Administrador';
+                                permLabel = 'Acceso Total';
+                            } else if (u.role === 'ventas') {
+                                roleBadge = 'badge-primary';
+                                roleLabel = 'Ventas';
+                                permLabel = 'Lectura/Escritura Inventario';
+                            } else if (u.role === 'logistica') {
+                                roleBadge = 'badge-warning';
+                                roleLabel = 'Logística';
+                                permLabel = 'Gestión Despachos';
+                            } else if (u.role === 'asesor') {
+                                roleBadge = 'badge-success';
+                                roleLabel = 'Asesor';
+                                permLabel = 'Soporte Clientes';
+                            }
+
+                            const isSelf = u.username === user.username;
+                            
+                            return `
+                                <tr style="${isSelf ? 'background: rgba(95, 90, 246, 0.04);' : ''}">
+                                    <td><code>#${u.id}</code></td>
+                                    <td>
+                                        <strong>${u.username}</strong>
+                                        ${isSelf ? '<span class="badge badge-primary" style="margin-left: 8px; font-size: 10px;">Tú</span>' : ''}
+                                    </td>
+                                    <td><span class="badge ${roleBadge}">${roleLabel}</span></td>
+                                    <td><small style="color: var(--gray); font-weight: 500;">${permLabel}</small></td>
+                                    <td>
+                                        <div style="display: flex; gap: 8px;">
+                                            <button class="btn-secondary" onclick="editUser(${u.id})" style="padding: 6px 12px; font-size: 12px;">Editar</button>
+                                            ${isSelf ? '' : `<button class="btn-secondary" onclick="deleteUser(${u.id}, '${u.username}')" style="padding: 6px 12px; font-size: 12px; color: var(--danger); border-color: rgba(239,68,68,0.2);">Borrar</button>`}
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Modal triggers
+        function openUserModal(userData = null) {
+            const modal = document.getElementById('userModal');
+            const title = document.getElementById('modalTitle');
+            const form = document.getElementById('userForm');
+            const pwdInput = document.getElementById('userPassword');
+            const pwdLabel = document.getElementById('lblPassword');
+            const pwdHint = document.getElementById('passwordHint');
+
+            form.reset();
+            modal.classList.add('active');
+
+            if (userData) {
+                title.textContent = 'Editar Cuenta de Usuario';
+                document.getElementById('userId').value = userData.id;
+                document.getElementById('userUsername').value = userData.username;
+                document.getElementById('userRole').value = userData.role;
+                pwdLabel.textContent = 'Nueva Contraseña';
+                pwdInput.placeholder = 'Dejar en blanco para conservar...';
+                pwdInput.required = false;
+                pwdHint.style.display = 'block';
+            } else {
+                title.textContent = 'Nuevo Usuario';
+                document.getElementById('userId').value = '';
+                pwdLabel.textContent = 'Contraseña';
+                pwdInput.placeholder = 'Ingresa contraseña del usuario...';
+                pwdInput.required = true;
+                pwdHint.style.display = 'none';
+            }
+        }
+
+        function closeUserModal() {
+            document.getElementById('userModal').classList.remove('active');
+        }
+
+        function editUser(userId) {
+            const userData = allUsers.find(u => u.id === userId);
+            if (userData) {
+                openUserModal(userData);
+            }
+        }
+
+        // POST / PATCH API Action
+        async function saveUser() {
+            const id = document.getElementById('userId').value;
+            const username = document.getElementById('userUsername').value.trim();
+            const role = document.getElementById('userRole').value;
+            const password = document.getElementById('userPassword').value;
+
+            if (!username || !role) {
+                alert('El usuario y el rol son obligatorios');
+                return;
+            }
+
+            // If creating, password is required
+            if (!id && !password) {
+                alert('La contraseña es obligatoria para usuarios nuevos');
+                return;
+            }
+
+            const payload = { username, role };
+            if (password) {
+                payload.password = password;
+            }
+
+            const isEdit = !!id;
+            const endpoint = isEdit ? `/users/${id}` : '/users';
+            const method = isEdit ? 'PATCH' : 'POST';
+
+            try {
+                const res = await Vekas.api.request(endpoint, {
+                    method,
+                    body: JSON.stringify(payload)
+                });
+
+                Vekas.ui.showAlert('alertContainer', res.message || 'Operación completada exitosamente', 'success');
+                closeUserModal();
+                loadUsers();
+            } catch (error) {
+                console.error('Error saving user:', error);
+                alert('Error al guardar el usuario: ' + error.message);
+            }
+        }
+
+        // DELETE API Action
+        async function deleteUser(userId, username) {
+            if (!confirm(`¿Estás seguro de que deseas eliminar permanentemente al usuario "${username}"?\nEsta acción no se puede deshacer.`)) {
+                return;
+            }
+
+            try {
+                const res = await Vekas.api.request(`/users/${userId}`, {
+                    method: 'DELETE'
+                });
+
+                Vekas.ui.showAlert('alertContainer', res.message || 'Usuario eliminado exitosamente', 'success');
+                loadUsers();
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                alert('Error al eliminar el usuario: ' + error.message);
+            }
+        }
+
+        document.getElementById('btnAddUser').addEventListener('click', () => openUserModal());
+
+        loadUsers();
+
+        // Render dynamic sidebar links
+        const navItems = {
+            'admin': [
+                { href: '/dashboard', icon: '📊', label: 'Dashboard' },
+                { href: '/productos', icon: '📦', label: 'Productos' },
+                { href: '/pedidos', icon: '📋', label: 'Pedidos' },
+                { href: '/conversaciones', icon: '💬', label: 'Conversaciones' },
+                { href: '/clientes', icon: '👥', label: 'Clientes' },
+                { href: '/reportes', icon: '📈', label: 'Reportes' },
+                { href: '/usuarios', icon: '👤', label: 'Usuarios' },
+            ]
+        };
+
+        const nav = document.getElementById('sidebarNav');
+        const items = navItems[user.role] || [];
+        nav.innerHTML = items.map(item => `
+            <li><a href="${item.href}" class="${window.location.pathname === item.href ? 'active' : ''}">${item.icon} ${item.label}</a></li>
+        `).join('');
+    </script>
+</body>
+
+</html>

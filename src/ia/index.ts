@@ -1,6 +1,6 @@
 /**
  * @file index.ts
- * @description Punto de entrada del módulo IA de HalleyCol.
+ * @description Punto de entrada del módulo IA de Vekas.
  * Exporta todos los servicios, interfaces, tipos y utilidades.
  * También expone una fábrica (Factory Pattern) para crear la instancia
  * correcta de IAService según la variable de entorno AI_ENGINE.

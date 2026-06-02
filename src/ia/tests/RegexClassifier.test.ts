@@ -149,10 +149,11 @@ async function suiteClasificacion() {
     expect(result.confidence).toBeGreaterThanOrEqual(0.65);
   });
 
-  await test('Clasifica texto sin sentido como "otro" con baja confianza', async () => {
+  await test('Clasifica texto sin sentido como "otro" con fallback explícito', async () => {
     const result = await classifier.classifyIntent('xkdksj alksjd');
     expect(result.intent).toBe('otro');
-    expect(result.confidence).toBeLessThan(0.50);
+    expect(result.confidence).toBe(1);
+    expect(result.fallbackResponse).toBeTruthy();
   });
 
   await test('Retorna IntentResult con structure correcta', async () => {
@@ -266,7 +267,7 @@ async function suiteSesiones() {
     const result = await classifier.manageSession('sess_test_001', 'create');
     expect(result.success).toBeTruthy();
     expect(result.sessionId).toBe('sess_test_001');
-    expect(result.context).toHaveProperty('fsmStep');
+    expect(result.context).toHaveProperty('fsmState');
   });
 
   await test('Recupera sesión existente', async () => {
@@ -296,7 +297,7 @@ async function suiteSesiones() {
 // ─────────────────────────────────────────────
 
 async function runAllTests() {
-  console.log('🧪 HalleyCol — Tests del Módulo IA (RegexClassifier v1.0.0)');
+  console.log('🧪 Vekas — Tests del Módulo IA (RegexClassifier v1.0.0)');
   console.log('═'.repeat(60));
 
   await suiteClasificacion();

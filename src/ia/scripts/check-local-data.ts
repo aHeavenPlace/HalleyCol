@@ -13,7 +13,7 @@ const pool = new Pool({
   port: Number(process.env.PGPORT) || 5432,
   user: process.env.PGUSER || 'postgres',
   password: process.env.PGPASSWORD || '12345678',
-  database: process.env.PGDATABASE || 'halleycol_db',
+  database: process.env.PGDATABASE || 'vekas_db',
 });
 
 async function checkData() {

@@ -1,5 +1,5 @@
 ====================================================================
-  HALLEYCOL — AVANCE DEL MÓDULO DE INTELIGENCIA ARTIFICIAL
+  VEKAS — AVANCE DEL MÓDULO DE INTELIGENCIA ARTIFICIAL
   Fecha: 2026-04-16
   Versión: MVP v1.0.0
 ====================================================================
@@ -7,11 +7,11 @@
 --------------------------------------------------------------------
 1. DESCRIPCIÓN GENERAL
 --------------------------------------------------------------------
-Se desarrolló el módulo de Inteligencia Artificial para HalleyCol,
+Se desarrolló el módulo de Inteligencia Artificial para Vekas,
 una tienda de calzado femenino online en Bucaramanga. El módulo está
 ubicado en:
 
-  C:\Users\Who\Documents\HalleyCol\src\ia\
+  C:\Users\Who\Documents\Vekas\src\ia\
 
 El objetivo es proporcionar un chatbot conversacional capaz de:
   - Responder preguntas frecuentes (tallas, envíos, pagos)
@@ -65,7 +65,7 @@ El objetivo es proporcionar un chatbot conversacional capaz de:
   [A] CLASIFICADOR DE INTENCIONES (RegexClassifier)
       Clasifica mensajes del cliente en 9 intenciones:
         1. consulta_talla   - Preguntas sobre tallas disponibles
-        2. estado_pedido    - Seguimiento de pedidos (formato HC-XXXX)
+        2. estado_pedido    - Seguimiento de pedidos (formato VK-XXXX o HC-XXXX)
         3. faq_pago         - Métodos de pago (Nequi, Daviplata, etc.)
         4. faq_envio        - Tiempos y costos de envío
         5. quejar           - Reclamos y quejas
@@ -85,7 +85,7 @@ El objetivo es proporcionar un chatbot conversacional capaz de:
         - Talla:        números 34–42 (ej: "talla 38" → '38')
         - Color:        colores en singular/plural (ej: "rosadas")
         - Ciudad:       ciudades colombianas con/sin tilde (ej: "Bogotá")
-        - Nro. pedido:  formato HC-XXXX (ej: "HC-5678")
+        - Nro. pedido:  formato VK-XXXX o HC-XXXX (ej: "VK-5678")
         - Teléfono:     números colombianos de 10 dígitos
         - Tipo calzado: sandalias, botas, tacones, etc.
 
@@ -97,7 +97,7 @@ El objetivo es proporcionar un chatbot conversacional capaz de:
 
   [D] MOTOR DE PLANTILLAS DE RESPUESTA
       - Una plantilla por intención con variables interpolables
-      - Datos reales de HalleyCol: número Nequi, ciudades, tiempos de envío
+      - Datos reales de Vekas: número Nequi, ciudades, tiempos de envío
       - Botones de acción rápida por intención
       - Plantilla especial de handoff
 
@@ -137,7 +137,7 @@ CLI, el resto del sistema no necesita modificaciones.
 Pendiente para v1.1.0:
   - Instalar: npm install @google/generative-ai
   - Configurar GEMINI_API_KEY en variables de entorno
-  - Implementar prompt de sistema con contexto HalleyCol
+  - Implementar prompt de sistema con contexto Vekas
   - Parsear respuesta JSON de Gemini a IntentResult
   - Activar con: AI_ENGINE=gemini
 
@@ -160,7 +160,7 @@ Pendiente para v1.1.0:
     Verifica crear, recuperar, y expirar sesiones correctamente.
 
   Para ejecutar:
-    cd C:\Users\Who\Documents\HalleyCol
+    cd C:\Users\Who\Documents\Vekas
     npm run test:ia
 
 --------------------------------------------------------------------
@@ -184,5 +184,5 @@ Pendiente para v1.1.0:
 
 ====================================================================
   Desarrollado con TypeScript · Node.js · Patrón Strategy
-  HalleyCol — Calzado Femenino · Bucaramanga, Colombia
+  Vekas — Calzado Femenino · Bucaramanga, Colombia
 ====================================================================

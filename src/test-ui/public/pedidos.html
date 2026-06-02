@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pedidos - HalleyCol CRM</title>
+    <title>Pedidos - Vekas CRM</title>
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 
@@ -14,10 +14,10 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-logo">
-                    <img src="/img/logo.png" alt="HalleyCol">
+                    <img src="/img/logo.png" alt="Vekas">
                 </div>
                 <div class="sidebar-brand">
-                    <h1>HalleyCol</h1>
+                    <h1>Vekas</h1>
                     <p>CRM System</p>
                 </div>
             </div>
@@ -34,7 +34,7 @@
             </nav>
 
             <div class="sidebar-logout">
-                <a href="#" onclick="HalleyCol.auth.logout(); return false;">
+                <a href="#" onclick="Vekas.auth.logout(); return false;">
                     🚪 Cerrar Sesión
                 </a>
             </div>
@@ -103,6 +103,22 @@
                         <label>Total</label>
                         <input type="text" id="orderTotal" readonly style="background: var(--light);">
                     </div>
+                    <!-- Comprobante de pago -->
+                    <div id="comprobanteSection" class="form-group" style="display:none">
+                        <label>📎 Comprobante de Pago</label>
+                        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--light);border-radius:8px;border:1px solid var(--border);">
+                            <a id="comprobanteLink" href="#" target="_blank">
+                                <img id="comprobanteImg" src="" alt="Comprobante"
+                                     style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:zoom-in;border:2px solid var(--success);">
+                            </a>
+                            <div>
+                                <p style="font-size:13px;font-weight:600;color:var(--success);">✅ Comprobante adjunto</p>
+                                <a id="comprobanteLink" href="#" target="_blank"
+                                   style="font-size:12px;color:var(--primary);">Ver en tamaño completo →</a>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <label for="orderEstado">Estado</label>
                         <select id="orderEstado" required>
@@ -143,22 +159,39 @@
     <script src="/js/app.js"></script>
     <script>
         // Verificar autenticación y rol
-        if (!HalleyCol.auth.requireRole('admin', 'ventas', 'logistica')) {
+        if (!Vekas.auth.requireRole('admin', 'ventas', 'logistica', 'asesor')) {
             window.location.href = '/unauthorized';
         }
 
         // Inicializar
-        const user = HalleyCol.auth.getCurrentUser();
-        HalleyCol.ui.initSidebar();
+        const user = Vekas.auth.getCurrentUser();
+        Vekas.ui.initSidebar();
+
+        // Aprobar / rechazar comprobante (ventas y admin)
+        async function validarPedido(orderId, nuevoEstado) {
+            try {
+                await Vekas.api.request(`/orders/${orderId}`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ estado: nuevoEstado }),
+                });
+                Vekas.ui.showAlert('alertContainer',
+                    nuevoEstado === 'Pagado' ? '✅ Pedido aprobado exitosamente' : '🚫 Pedido rechazado',
+                    nuevoEstado === 'Pagado' ? 'success' : 'error'
+                );
+                loadOrders();
+            } catch (e) {
+                Vekas.ui.showAlert('alertContainer', 'Error: ' + e.message, 'error');
+            }
+        }
 
         // Cargar pedidos
         async function loadOrders() {
             try {
-                const data = await HalleyCol.api.request('/orders');
+                const data = await Vekas.api.request('/orders');
                 renderOrdersWithFilter(data.orders);
             } catch (error) {
                 console.error('Error loading orders:', error);
-                HalleyCol.ui.showAlert('alertContainer', 'Error cargando pedidos', 'error');
+                Vekas.ui.showAlert('alertContainer', 'Error cargando pedidos', 'error');
             }
         }
 
@@ -178,7 +211,8 @@
             }
 
             const container = document.getElementById('pedidosContainer');
-            const canEdit = HalleyCol.auth.hasRole('admin', 'logistica');
+            const canEdit = Vekas.auth.hasRole('admin', 'logistica');
+            const canValidate = Vekas.auth.hasRole('admin', 'ventas');
 
             container.innerHTML = `
                 <table>
@@ -189,29 +223,52 @@
                             <th>Ciudad</th>
                             <th>Productos</th>
                             <th>Total</th>
+                            <th>Comprobante</th>
                             <th>Estado</th>
                             <th>Guía</th>
                             <th>Fecha</th>
-                            ${canEdit ? '<th>Acciones</th>' : ''}
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${filtered.map(o => `
+                        ${filtered.map(o => {
+                            const isPendingValidation = o.estado === 'Pendiente Validacion';
+                            const hasComprobante = !!o.comprobante_url;
+
+                            const comprobanteCell = hasComprobante
+                                ? `<a href="${o.comprobante_url}" target="_blank" title="Ver comprobante">
+                                     <img src="${o.comprobante_url}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:2px solid var(--success);cursor:zoom-in;">
+                                   </a>`
+                                : `<span style="color:var(--gray);font-size:12px;">Sin comprobante</span>`;
+
+                            const validationBtns = (canValidate && isPendingValidation && hasComprobante)
+                                ? `<div style="display:flex;gap:6px;margin-top:4px;">
+                                     <button class="btn-primary" onclick="validarPedido('${o.id}','Pagado')" style="padding:4px 10px;font-size:11px;background:var(--success);">✅ Aprobar</button>
+                                     <button class="btn-secondary" onclick="validarPedido('${o.id}','Rechazado')" style="padding:4px 10px;font-size:11px;color:#ef4444;border-color:#ef4444;">🚫 Rechazar</button>
+                                   </div>`
+                                : '';
+
+                            const editBtn = canEdit
+                                ? `<button class="btn-secondary" onclick="openOrderModal('${o.id}')" style="padding:6px 12px;font-size:12px;">Editar</button>`
+                                : '';
+
+                            return `
                             <tr>
                                 <td><strong>${o.numero_orden}</strong></td>
                                 <td>
                                     ${o.cliente_nombre}<br>
-                                    <small style="color: var(--gray);">${o.cliente_whatsapp}</small>
+                                    <small style="color:var(--gray);">${o.cliente_whatsapp}</small>
                                 </td>
                                 <td>${o.ciudad || 'N/A'}<br><small>${o.direccion || ''}</small></td>
                                 <td>${o.productos}</td>
-                                <td><strong>${HalleyCol.ui.formatCurrency(o.total)}</strong></td>
-                                <td><span class="badge ${HalleyCol.ui.getBadgeForStatus(o.estado)}">${o.estado}</span></td>
-                                <td>${o.guia_tracker || '<span style="color: var(--gray);">Sin guía</span>'}</td>
-                                <td>${HalleyCol.ui.formatRelativeTime(o.created_at)}</td>
-                                ${canEdit ? `<td><button class="btn-secondary" onclick="openOrderModal('${o.id}')" style="padding: 6px 12px; font-size: 12px;">Editar</button></td>` : ''}
-                            </tr>
-                        `).join('')}
+                                <td><strong>${Vekas.ui.formatCurrency(o.total)}</strong></td>
+                                <td>${comprobanteCell}</td>
+                                <td><span class="badge ${Vekas.ui.getBadgeForStatus(o.estado)}">${o.estado}</span></td>
+                                <td>${o.guia_tracker || '<span style="color:var(--gray);">Sin guía</span>'}</td>
+                                <td>${Vekas.ui.formatRelativeTime(o.created_at)}</td>
+                                <td>${editBtn}${validationBtns}</td>
+                            </tr>`;
+                        }).join('')}
                     </tbody>
                 </table>
             `;
@@ -227,7 +284,7 @@
 
         async function openOrderModal(orderId) {
             try {
-                const data = await HalleyCol.api.request('/orders');
+                const data = await Vekas.api.request('/orders');
                 const order = data.orders.find(o => o.id === orderId);
                 if (!order) return;
 
@@ -237,7 +294,7 @@
                 document.getElementById('orderNumero').value = order.numero_orden;
                 document.getElementById('orderCliente').value = `${order.cliente_nombre} (${order.cliente_whatsapp})`;
                 document.getElementById('orderProductos').value = order.productos;
-                document.getElementById('orderTotal').value = HalleyCol.ui.formatCurrency(order.total);
+                document.getElementById('orderTotal').value = Vekas.ui.formatCurrency(order.total);
                 document.getElementById('orderEstado').value = order.estado;
                 document.getElementById('orderGuia').value = order.guia_tracker || '';
 
@@ -248,9 +305,21 @@
                 }
                 document.getElementById('orderLogistica').value = logistica;
 
+                // Mostrar comprobante en el modal si existe
+                const comprobanteSection = document.getElementById('comprobanteSection');
+                const comprobanteImg = document.getElementById('comprobanteImg');
+                const comprobanteLink = document.getElementById('comprobanteLink');
+                if (order.comprobante_url) {
+                    comprobanteImg.src = order.comprobante_url;
+                    comprobanteLink.href = order.comprobante_url;
+                    comprobanteSection.style.display = 'block';
+                } else {
+                    comprobanteSection.style.display = 'none';
+                }
+
                 document.getElementById('orderModal').classList.add('active');
             } catch (error) {
-                HalleyCol.ui.showAlert('alertContainer', 'Error cargando pedido', 'error');
+                Vekas.ui.showAlert('alertContainer', 'Error cargando pedido', 'error');
             }
         }
 
@@ -271,16 +340,16 @@
             }
 
             try {
-                await HalleyCol.api.request(`/orders/${orderId}`, {
+                await Vekas.api.request(`/orders/${orderId}`, {
                     method: 'PATCH',
                     body: JSON.stringify(updateData),
                 });
 
-                HalleyCol.ui.showAlert('alertContainer', 'Pedido actualizado exitosamente', 'success');
+                Vekas.ui.showAlert('alertContainer', 'Pedido actualizado exitosamente', 'success');
                 closeOrderModal();
                 loadOrders();
             } catch (error) {
-                HalleyCol.ui.showAlert('alertContainer', 'Error actualizando pedido: ' + error.message, 'error');
+                Vekas.ui.showAlert('alertContainer', 'Error actualizando pedido: ' + error.message, 'error');
             }
         }
 
@@ -293,6 +362,7 @@
                 { href: '/conversaciones', icon: '💬', label: 'Conversaciones' },
                 { href: '/clientes', icon: '👥', label: 'Clientes' },
                 { href: '/reportes', icon: '📈', label: 'Reportes' },
+                { href: '/usuarios', icon: '👤', label: 'Usuarios' },
             ],
             'ventas': [
                 { href: '/dashboard', icon: '📊', label: 'Dashboard' },
@@ -302,7 +372,13 @@
                 { href: '/reportes', icon: '📈', label: 'Reportes' },
             ],
             'logistica': [
-                { href: '/dashboard-logistica', icon: '📋', label: 'Mis Pedidos' },
+                { href: '/dashboard-logistica', icon: '🚚', label: 'Mis Pedidos' },
+                { href: '/productos', icon: '📦', label: 'Productos' },
+            ],
+            'asesor': [
+                { href: '/dashboard-asesor', icon: '💬', label: 'Mis Conversaciones' },
+                { href: '/productos', icon: '📦', label: 'Productos' },
+                { href: '/pedidos', icon: '📋', label: 'Pedidos' },
             ],
         };
 

@@ -1,5 +1,5 @@
 /**
- * HALLEYCOL CRM - Utilidades Principales
+ * VEKAS CRM - Utilidades Principales
  */
 
 // ========================================
@@ -7,16 +7,16 @@
 // ========================================
 
 function getCurrentUser() {
-  const userStr = localStorage.getItem('halleycol_user');
+  const userStr = localStorage.getItem('vekas_user');
   return userStr ? JSON.parse(userStr) : null;
 }
 
 function setCurrentUser(user) {
-  localStorage.setItem('halleycol_user', JSON.stringify(user));
+  localStorage.setItem('vekas_user', JSON.stringify(user));
 }
 
 function removeCurrentUser() {
-  localStorage.removeItem('halleycol_user');
+  localStorage.removeItem('vekas_user');
 }
 
 function isLoggedIn() {
@@ -390,7 +390,7 @@ function initSidebar() {
 // EXPORTS
 // ========================================
 
-window.HalleyCol = {
+window.Vekas = {
   auth: {
     getCurrentUser,
     setCurrentUser,

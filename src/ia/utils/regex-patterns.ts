@@ -1,6 +1,6 @@
 /**
  * @file regex-patterns.ts
- * @description Patrones regex de extracción de entidades del dominio HalleyCol.
+ * @description Patrones regex de extracción de entidades del dominio Vekas.
  * Usados por el RegexClassifier para identificar tallas, colores, ciudades
  * y números de pedido en el texto del cliente.
  *
@@ -38,10 +38,10 @@ function buildPatterns() {
     ciudad: /(?:estoy en|vivo en|para|a)?\s*(amazonas|antioquia|arauca|atl[aá]ntico|bol[ií]var|boyac[aá]|caldas|caquet[aá]|casanare|cauca|cesar|choc[oó]|c[oó]rdoba|cundinamarca|guain[ií]a|guaviare|huila|la guajira|magdalena|meta|nari[nñ]o|norte de santander|putumayo|quind[ií]o|risaralda|san andr[eé]s|providencia|santander|sucre|tolima|valle del cauca|vaup[eé]s|vichada|bogot[aá]|bgta|medell[ií]n|medallo|mediin|cali|bucaramanga|bucara|bga|barranquilla|killa|cartagena|c[uú]cuta|santa marta|ibagu[eé]|bello|villavicencio|villavo|soledad|pereira|manizales|valledupar|neiva|monter[ií]a|pasto|armenia|soacha|popay[aá]n|floridablanca|florida|gir[oó]n|piedecuesta|lebrija|palmira|buenaventura|sincelejo|barrancabermeja|barranca|tunja|riohacha|florencia|cartago|quibd[oó]|turbaco|zipaquir[aá]|girardot|fusagasug[aá]|fusa|chia|ch[ií]a|facatativ[aá]|faca|p[aá]mplo[nñ]a)/i,
 
     /**
-     * Número de pedido en formato HalleyCol: HC-XXXX o #XXXX.
-     * @example "mi pedido HC-5678" → "HC-5678"
+     * Número de pedido en formato Vekas: VK-XXXX, HC-XXXX o #XXXX.
+     * @example "mi pedido VK-5678" → "VK-5678"
      */
-    numeroPedido: /\b(HC-\d{4,6}|#\d{4,6})\b/gi,
+    numeroPedido: /\b(VK-\d{4,6}|HC-\d{4,6}|#\d{4,6})\b/gi,
 
     /**
      * Teléfonos colombianos de 10 dígitos iniciando con 3.
@@ -56,14 +56,14 @@ function buildPatterns() {
     tipoCalzado: /\b(sandalias?|tac[oó]n|tacones|botas?|zapatos?|mules?|baletas?|plataformas?|cu[nñ]as?|sneakers?)\b/gi,
 
     /**
-     * Modelos específicos del catálogo real
+     * Modelos específicos del catálogo real (nombres de producto y marcas)
      */
-    productoEspecifico: /\b(air max|ultraboost|suede|classic|1460|arizona|ankle|classics|air force|old skool|chuck taylor|clog|stessy|botines)\b/gi,
+    productoEspecifico: /\b(nike\s*air\s*max|air\s*max|adidas\s*ultraboost|ultraboost|crocs\s*classic|crocs|ugg\s*classic\s*ultra\s*mini|ugg|birkenstock\s*arizona|birkenstock|vans\s*old\s*skool|old\s*skool|vans|converse|dr\s*martens|suede|classic|1460|arizona|ankle|classics|air\s*force|chuck\s*taylor|clog|stessy)\b/gi,
 
     /**
      * Métodos de pago
      */
-    metodoPago: /\b(nequi|daviplata|efectivo|contra\s*entrega|tarjeta)\b/gi,
+    metodoPago: /\b(nequi|daviplata|efectivo|contra\s*entrega|tarjeta|transferencia|breb)\b/gi,
   };
 }
 
@@ -105,7 +105,16 @@ export function extractEntities(text: string): Record<string, string | null> {
 
   for (const key of Object.keys(patterns) as EntityKey[]) {
     const match = patterns[key].exec(text);
-    entities[key] = match ? match[0] : null;
+    if (!match) {
+      entities[key] = null;
+      continue;
+    }
+
+    const rawValue = match[1] ?? match[0];
+    entities[key] =
+      key === 'ciudad'
+        ? rawValue.replace(/^(?:estoy en|vivo en|soy de|para|a)\s+/i, '').trim()
+        : rawValue;
   }
 
   return entities;

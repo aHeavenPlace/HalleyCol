@@ -1,6 +1,6 @@
 /**
  * @file intent-dictionary.ts
- * @description Diccionario de palabras clave e intenciones del dominio HalleyCol.
+ * @description Diccionario de palabras clave e intenciones del dominio Vekas.
  * Fuente de verdad para el RegexClassifier. Cada intención tiene keywords,
  * un regex ponderado y un peso base de confianza.
  * @module ia/utils
@@ -41,7 +41,7 @@ export const intentPatterns: Record<KnownIntent, IntentPattern> = {
       'cuanto mide', 'tallas disponibles', 'qué tallas', 'que tallas',
       '35', '36', '37', '38', '39', '40', '41',
     ],
-    regex: /(talla|medida|número|numeros?|en|la)?\s*(3[4-9]|4[0-3])|(talla|medida|número|numeros?)\s*(disponible|tienen|hay|manejan|venden)?/i,
+    regex: /(talla|medida|número|numeros?)\s*\b(3[4-9]|4[0-2])\b|\b(3[4-9]|4[0-2])\b(?:\s*(?:disponible|tienen|hay|manejan|venden))?/i,
     weight: 0.95,
     keywordWeight: 0.65,
   },
@@ -53,7 +53,7 @@ export const intentPatterns: Record<KnownIntent, IntentPattern> = {
       'tracking', 'rastreo', 'cuándo llega', 'cuando llega',
       'mi pedido', 'lo que compré', 'entrega',
     ],
-    regex: /(pedido|orden|compra)\s*(dónde|donde|estado|llegó|lleva|llegar|va)/i,
+    regex: /(pedido|orden|compra|rastreo|tracking|gu[ií]a)\s*(dónde|donde|estado|llegó|lleva|llegar|va|va mi|esta mi)?/i,
     weight: 0.90,
     keywordWeight: 0.70,
   },
@@ -66,9 +66,9 @@ export const intentPatterns: Record<KnownIntent, IntentPattern> = {
       'metodo de pago', 'forma de pago', 'cómo pago', 'como pago',
       'acepta', 'aceptan',
     ],
-    regex: /(pago|pagar|método|metodo|forma|aceptan?)\s*(pago|de pago|pagos?|con)?/i,
-    weight: 0.85,
-    keywordWeight: 0.68,
+    regex: /(pago|pagar|m[eé]todo|forma|aceptan?)\s*(pago|de pago|pagos?)?|nequi|daviplata|transferencia|contra\s*entrega|efectivo/i,
+    weight: 0.88,
+    keywordWeight: 0.72,
   },
 
   // ─────────── ENVÍOS ───────────
@@ -79,9 +79,9 @@ export const intentPatterns: Record<KnownIntent, IntentPattern> = {
       'ciudad', 'ciudades', 'costo de envío', 'domicilio',
       'llega a', 'mandan a', 'bucaramanga', 'bogotá', 'medellín',
     ],
-    regex: /(envío|envio|enviar|despacho|entrega)\s*(a|cuánto|cuanto|tiempo|ciudades?|costo)?/i,
-    weight: 0.85,
-    keywordWeight: 0.68,
+    regex: /(env[ií]o|envio|enviar|despacho|entrega)\s*(a|cu[aá]nto|cuanto|tiempo|ciudades?|costo)?|bucaramanga|bogot[aá]|medell[ií]n|cali|cartagena|c[uú]cuta/i,
+    weight: 0.88,
+    keywordWeight: 0.72,
   },
 
   // ─────────── QUEJAS ───────────
@@ -146,32 +146,40 @@ export const intentPatterns: Record<KnownIntent, IntentPattern> = {
 
   // ─────────── FSM COMPRAS ───────────
   seleccionar_producto: {
-    keywords: ['quiero', 'comprar', 'me gustan', 'las', 'los', 'un', 'una', 'dame', 'llevo', 'air max', 'ultraboost', 'suede', 'classic'],
-    regex: /(quiero|comprar|me gustan|dame|llevo)\s*(las|los|unas?|unos?)?\s*(air max|ultraboost|suede|classic|1460|arizona|ankle|classics|air force|old skool|chuck taylor|clog|stessy|botines)/i,
+    keywords: [
+      'quiero', 'comprar', 'me gustan', 'dame', 'llevo',
+      // Modelos catálogo
+      'air max', 'ultraboost', 'suede', 'classic', '1460', 'arizona',
+      'ankle', 'air force', 'old skool', 'chuck taylor', 'clog', 'stessy',
+      // Marcas completas
+      'nike', 'adidas', 'crocs', 'ugg', 'birkenstock', 'vans', 'converse', 'dr martens',
+    ],
+    regex: /(quiero|comprar|me gustan?|dame|llevo|pedir)\s*(las?|los?|unas?|unos?|el|la)?\s*(nike|adidas|crocs|ugg|birkenstock|vans|converse|dr\s*martens|air max|ultraboost|suede|classic|1460|arizona|ankle|classics|air force|old skool|chuck taylor|clog|stessy|ultra mini)/i,
     weight: 0.95,
-    keywordWeight: 0.85,
+    keywordWeight: 0.82,
   },
   informar_talla: {
-    keywords: ['soy', 'talla', 'numero', '35', '36', '37', '38', '39', '40'],
-    regex: /(?:soy|talla|numero|en|la)?\s*(3[4-9]|4[0-2])/i,
-    weight: 0.9,
-    keywordWeight: 0.7,
+    keywords: ['soy', 'talla', 'numero', '34', '35', '36', '37', '38', '39', '40', '41', '42'],
+    // Acepta número solo (ej: "38"), con prefijo ("talla 38"), o rango ("en la 39")
+    regex: /^\s*(3[4-9]|4[0-2])\s*$|(?:talla|numero|num|en\s+la|la)\s*\b(3[4-9]|4[0-2])\b/i,
+    weight: 0.92,
+    keywordWeight: 0.72,
   },
   informar_ciudad: {
     keywords: ['estoy en', 'vivo en', 'para', 'bogota', 'medellin', 'cali', 'bucaramanga', 'barranquilla'],
-    regex: /(?:estoy en|vivo en|para|a)?\s*(bogot[aá]|medell[ií]n|cali|bucaramanga|barranquilla|cartagena|c[uú]cuta)/i,
+    regex: /^(?:estoy en|vivo en|soy de|para|a)?\s*(bogot[aá]|medell[ií]n|cali|bucaramanga|barranquilla|cartagena|c[uú]cuta)\s*$/i,
     weight: 0.9,
     keywordWeight: 0.7,
   },
   informar_pago: {
-    keywords: ['con', 'pago', 'nequi', 'daviplata', 'efectivo', 'contraentrega', 'tarjeta'],
-    regex: /(?:con|pago|en)?\s*(nequi|daviplata|efectivo|contra\s*entrega|tarjeta)/i,
-    weight: 0.9,
-    keywordWeight: 0.7,
+    keywords: ['con', 'pago', 'nequi', 'daviplata', 'efectivo', 'contraentrega', 'tarjeta', 'transferencia'],
+    regex: /^(?:con\s*)?(nequi|daviplata|efectivo|contra\s*entrega|tarjeta|transferencia|breb)\s*$/i,
+    weight: 0.92,
+    keywordWeight: 0.72,
   },
   confirmar_pedido: {
-    keywords: ['confirmar pedido', 'si quiero', 'procesar orden', 'comprar eso'],
-    regex: /(confirmar|procesar)\s+(pedido|orden|compra)|si\s+quiero/i,
+    keywords: ['confirmar pedido', 'si quiero', 'procesar orden', 'comprar eso', 'confirmar', 'confirmo'],
+    regex: /(confirmar|procesar)\s+(pedido|orden|compra)|si\s+quiero|confirmo/i,
     weight: 0.95,
     keywordWeight: 0.8,
   },
@@ -206,7 +214,7 @@ export const humanRequestPhrases: string[] = [
 ];
 
 /**
- * Palabras clave del dominio HalleyCol (calzado, tienda, envíos, pagos).
+ * Palabras clave del dominio Vekas (calzado, tienda, envíos, pagos).
  * Si el texto NO contiene ninguna de estas palabras, se considera fuera de dominio.
  */
 export const domainKeywords: string[] = [
@@ -249,7 +257,7 @@ export const domainKeywords: string[] = [
 ];
 
 /**
- * Verifica si un texto está relacionado con el dominio de HalleyCol.
+ * Verifica si un texto está relacionado con el dominio de Vekas.
  * @param text - Texto del usuario (sin normalizar)
  * @returns true si el texto parece relacionado con calzado/tienda, false si es fuera de dominio
  */

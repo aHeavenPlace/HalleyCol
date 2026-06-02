@@ -1,7 +1,7 @@
 {
-  "name": "halleycol-ia",
+  "name": "vekas-ia",
   "version": "1.0.0",
-  "description": "Módulo de Inteligencia Artificial — HalleyCol Tienda de Calzado",
+  "description": "Módulo de Inteligencia Artificial — Vekas Tienda de Calzado",
   "main": "src/ia/index.ts",
   "scripts": {
     "start:ui": "ts-node --project tsconfig.ia.json src/test-ui/server.ts",
@@ -13,10 +13,10 @@
   "keywords": [
     "chatbot",
     "ia",
-    "halleycol",
+    "vekas",
     "calzado"
   ],
-  "author": "HalleyCol Dev Team",
+  "author": "Vekas Dev Team",
   "license": "ISC",
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
@@ -31,6 +31,7 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@types/dotenv": "^6.1.1",
+    "@types/multer": "^2.1.0",
     "@types/pg": "^8.20.0",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
@@ -38,6 +39,7 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
+    "multer": "^2.1.1",
     "pg": "^8.20.0"
   }
 }

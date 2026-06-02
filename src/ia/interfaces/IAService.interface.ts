@@ -1,6 +1,6 @@
 /**
  * @file IAService.interface.ts
- * @description Contrato principal del servicio de Inteligencia Artificial de HalleyCol.
+ * @description Contrato principal del servicio de Inteligencia Artificial de Vekas.
  * Tanto RegexClassifier (v1.0.0) como GeminiClassifier (v1.1.0) implementan esta interfaz,
  * garantizando sustitución sin cambios en el resto del sistema (Principio de Liskov).
  * @module ia/interfaces

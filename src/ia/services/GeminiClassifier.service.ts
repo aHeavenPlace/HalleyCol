@@ -6,9 +6,10 @@ import {
   SessionAction,
   SessionResult,
 } from '../types/ia.types';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 import { buildGeminiPrompt } from '../utils/gemini-prompt';
 import { InventoryService } from './Inventory.service';
+import * as fs from 'fs';
 
 export interface GeminiClassifierConfig {
   umbralConfianza?: number;
@@ -17,14 +18,14 @@ export interface GeminiClassifierConfig {
 }
 
 export class GeminiClassifier implements IAService {
-  public geminiClient: any;
+  public geminiClient: GenerativeModel | undefined;
   private readonly config: Required<GeminiClassifierConfig>;
   private inventoryService: InventoryService;
 
   constructor(config: GeminiClassifierConfig = {}) {
     this.config = {
       umbralConfianza: config.umbralConfianza ?? 0.75,
-      modelId: config.modelId ?? 'gemini-2.5-flash',
+      modelId: config.modelId ?? 'gemini-1.5-flash',
       apiKey: config.apiKey ?? process.env['GEMINI_API_KEY'] ?? '',
     };
 
@@ -79,7 +80,11 @@ export class GeminiClassifier implements IAService {
       }
     } catch (error: any) {
       console.error('[GeminiClassifier] Error calling Gemini API:', error);
-      require('fs').writeFileSync('gemini_error.txt', error.stack || error.message || String(error));
+      try {
+        fs.writeFileSync('gemini_error.txt', error.stack || error.message || String(error));
+      } catch (fsErr) {
+        console.error('[GeminiClassifier] Could not write error log to file:', fsErr);
+      }
       return {
         text: 'Lo siento, tuve un problema analizando nuestro inventario. Por favor intenta de nuevo en un momento.',
       };

@@ -16,7 +16,7 @@ const localPool = new Pool({
   port: Number(process.env.PGPORT) || 5432,
   user: process.env.PGUSER || 'postgres',
   password: process.env.PGPASSWORD || '12345678',
-  database: process.env.PGDATABASE || 'halleycol_db',
+  database: process.env.PGDATABASE || 'vekas_db',
 });
 
 // Pool para base de datos RENDER (destino)
@@ -24,9 +24,9 @@ const localPool = new Pool({
 const renderPool = new Pool({
   host: 'dpg-d836144vikkc73ctvhfg-a.oregon-postgres.render.com',
   port: 5432,
-  user: 'halleycol_user',
+  user: 'vekas_user',
   password: 'Kg0wvFbP1w8kGufs4yKY02n6VKNL29Ca',
-  database: 'halleycol',
+  database: 'vekas',
   ssl: { rejectUnauthorized: false }, // Render requiere SSL para conexiones externas
 });
 
@@ -317,7 +317,7 @@ async function main() {
     console.log('\n✅ ¡Migración completada exitosamente!\n');
     console.log('📌 Nota: Actualiza tu .env con las credenciales de Render para usar la nueva DB.');
     console.log('\n   External Database URL:');
-    console.log('   postgresql://halleycol_user:Kg0wvFbP1w8kGufs4yKY02n6VKNL29Ca@dpg-d836144vikkc73ctvhfg-a/halleycol\n');
+    console.log('   postgresql://vekas_user:Kg0wvFbP1w8kGufs4yKY02n6VKNL29Ca@dpg-d836144vikkc73ctvhfg-a/vekas\n');
 
   } catch (err) {
     console.error('\n❌ Error durante la migración:', err);

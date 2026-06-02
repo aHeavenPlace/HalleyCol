@@ -1,6 +1,6 @@
-# HalleyCol CRM 
+# Vekas CRM 
 
-Sistema integral de gestión para HalleyCol - Tienda de Calzado Femenino
+Sistema integral de gestión para Vekas - Tienda de Calzado Femenino
 
 ![Estado](https://img.shields.io/badge/estado-production-green)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-green)
@@ -11,7 +11,7 @@ Sistema integral de gestión para HalleyCol - Tienda de Calzado Femenino
 
 ## 📖 Descripción
 
-HalleyCol CRM es una plataforma completa que integra:
+Vekas CRM es una plataforma completa que integra:
 
 - **Chatbot con IA** para atención al cliente vía WhatsApp
 - **Sistema de gestión CRM** para administración de pedidos, productos y clientes
@@ -67,7 +67,7 @@ HalleyCol CRM es una plataforma completa que integra:
 ## 📁 Estructura del Proyecto
 
 ```
-halleycol-crm/
+vekas-crm/
 ├── src/
 │   ├── ia/                          # Módulo de IA
 │   │   ├── data/                    # Catálogos y datasets
@@ -101,8 +101,8 @@ halleycol-crm/
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/aHeavenPlace/HalleyCol.git
-cd HalleyCol
+git clone https://github.com/aHeavenPlace/Vekas.git
+cd Vekas
 ```
 
 ### 2. Instalar dependencias
@@ -119,15 +119,15 @@ Crear archivo `.env` en la raíz:
 # Database PostgreSQL (Render)
 PGHOST=dpg-d836144vikkc73ctvhfg-a.oregon-postgres.render.com
 PGPORT=5432
-PGUSER=halleycol_user
+PGUSER=vekas_user
 PGPASSWORD=Kg0wvFbP1w8kGufs4yKY02n6VKNL29Ca
-PGDATABASE=halleycol
+PGDATABASE=vekas
 
 # Gemini AI
 GEMINI_API_KEY=tu_api_key_aqui
 
 # JWT
-JWT_SECRET=halleycol-super-secret-key-2026
+JWT_SECRET=vekas-super-secret-key-2026
 
 # Server
 NODE_ENV=development
@@ -208,13 +208,13 @@ Los usuarios se crean automáticamente al ejecutar `setup-db.ts`:
 ### Construir imagen
 
 ```bash
-docker build -t halleycol-crm .
+docker build -t vekas-crm .
 ```
 
 ### Ejecutar contenedor
 
 ```bash
-docker run -p 3000:3000 --env-file .env halleycol-crm
+docker run -p 3000:3000 --env-file .env vekas-crm
 ```
 
 ---
@@ -234,13 +234,13 @@ git push origin main
 1. Ir a https://render.com
 2. New + → Web Service
 3. Conectar repositorio de GitHub
-4. Seleccionar `HalleyCol`
+4. Seleccionar `Vekas`
 
 ### 3. Configurar
 
 | Campo | Valor |
 |-------|-------|
-| Name | `halleycol-crm` |
+| Name | `vekas-crm` |
 | Region | `Oregon, USA` |
 | Branch | `main` |
 | Root Directory | (vacío) |
@@ -255,9 +255,9 @@ Agregar todas las del `.env` en la sección "Environment Variables":
 ```
 PGHOST=...
 PGPORT=5432
-PGUSER=halleycol_user
+PGUSER=vekas_user
 PGPASSWORD=...
-PGDATABASE=halleycol
+PGDATABASE=vekas
 GEMINI_API_KEY=...
 JWT_SECRET=...
 NODE_ENV=production
@@ -268,7 +268,7 @@ PORT=3000
 
 Click en "Create Web Service". Render construirá y desplegará automáticamente.
 
-URL resultante: `https://halleycol-crm.onrender.com`
+URL resultante: `https://vekas-crm.onrender.com`
 
 ---
 
@@ -342,20 +342,20 @@ npx ts-node --project tsconfig.ia.json src/ia/scripts/check-local-data.ts
 
 ## 📝 Licencia
 
-© 2025 HalleyCol. Todos los derechos reservados.
+© 2025 Vekas. Todos los derechos reservados.
 
 ---
 
 ## 👥 Equipo de Desarrollo
 
-- **Desarrollo Full Stack** - HalleyCol Dev Team
-- **IA & Chatbot** - HalleyCol Dev Team
-- **Diseño UI/UX** - HalleyCol Dev Team
+- **Desarrollo Full Stack** - Vekas Dev Team
+- **IA & Chatbot** - Vekas Dev Team
+- **Diseño UI/UX** - Vekas Dev Team
 
 ---
 
 ## 🆘 Soporte
 
 Para soporte técnico o consultas, contactar a:
-- Email: soporte@halleycol.com
+- Email: soporte@vekas.com
 - Documentación adicional en `/src/test-ui/public/README.md`

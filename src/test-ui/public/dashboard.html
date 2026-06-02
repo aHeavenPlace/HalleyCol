@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - HalleyCol CRM</title>
+    <title>Dashboard - Vekas CRM</title>
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 
@@ -14,10 +14,10 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-logo">
-                    <img src="/img/logo.png" alt="HalleyCol">
+                    <img src="/img/logo.png" alt="Vekas">
                 </div>
                 <div class="sidebar-brand">
-                    <h1>HalleyCol</h1>
+                    <h1>Vekas</h1>
                     <p>CRM System</p>
                 </div>
             </div>
@@ -28,18 +28,13 @@
             </div>
 
             <nav>
-                <ul class="sidebar-nav">
-                    <li><a href="/dashboard" class="active">📊 Dashboard</a></li>
-                    <li><a href="/productos">📦 Productos</a></li>
-                    <li><a href="/pedidos">📋 Pedidos</a></li>
-                    <li><a href="/conversaciones">💬 Conversaciones</a></li>
-                    <li><a href="/clientes">👥 Clientes</a></li>
-                    <li><a href="/reportes">📈 Reportes</a></li>
+                <ul class="sidebar-nav" id="sidebarNav">
+                    <!-- Se llena dinámicamente según el rol -->
                 </ul>
             </nav>
 
             <div class="sidebar-logout">
-                <a href="#" onclick="HalleyCol.auth.logout(); return false;">
+                <a href="#" onclick="Vekas.auth.logout(); return false;">
                     🚪 Cerrar Sesión
                 </a>
             </div>
@@ -119,38 +114,84 @@
 
     <script src="/js/app.js"></script>
     <script>
+        // Obtener usuario actual
+        const user = Vekas.auth.getCurrentUser();
+
         // Verificar autenticación y rol - solo admin y ventas
-        if (!HalleyCol.auth.requireRole('admin', 'ventas')) {
+        if (!Vekas.auth.requireRole('admin', 'ventas')) {
             // Redirigir al dashboard correspondiente según el rol
-            const user = HalleyCol.auth.getCurrentUser();
-            if (user.role === 'logistica') {
+            if (user && user.role === 'logistica') {
                 window.location.href = '/dashboard-logistica';
-            } else if (user.role === 'asesor') {
+            } else if (user && user.role === 'asesor') {
                 window.location.href = '/dashboard-asesor';
             } else {
                 window.location.href = '/unauthorized';
             }
         }
 
-        // Inicializar sidebar
-        HalleyCol.ui.initSidebar();
+        // Renderizar sidebar dinámico según el rol
+        const navItems = {
+            'admin': [
+                { href: '/dashboard', icon: '📊', label: 'Dashboard' },
+                { href: '/productos', icon: '📦', label: 'Productos' },
+                { href: '/pedidos', icon: '📋', label: 'Pedidos' },
+                { href: '/conversaciones', icon: '💬', label: 'Conversaciones' },
+                { href: '/clientes', icon: '👥', label: 'Clientes' },
+                { href: '/reportes', icon: '📈', label: 'Reportes' },
+                { href: '/usuarios', icon: '👤', label: 'Usuarios' },
+            ],
+            'ventas': [
+                { href: '/dashboard', icon: '📊', label: 'Dashboard' },
+                { href: '/productos', icon: '📦', label: 'Productos' },
+                { href: '/pedidos', icon: '📋', label: 'Pedidos' },
+                { href: '/clientes', icon: '👥', label: 'Clientes' },
+                { href: '/reportes', icon: '📈', label: 'Reportes' },
+            ],
+        };
+
+        const nav = document.getElementById('sidebarNav');
+        const items = navItems[user ? user.role : 'ventas'] || navItems['ventas'];
+        nav.innerHTML = items.map(item => `
+            <li><a href="${item.href}" class="${window.location.pathname === item.href ? 'active' : ''}">${item.icon} ${item.label}</a></li>
+        `).join('');
+
+        // Inicializar sidebar con nombre de usuario real
+        Vekas.ui.initSidebar();
 
         // Cargar datos del dashboard
         async function loadDashboard() {
             try {
-                const data = await HalleyCol.api.request('/dashboard');
+                const data = await Vekas.api.request('/dashboard');
 
                 // Actualizar stats
                 const totalPedidos = data.data.estados.reduce((sum, e) => sum + parseInt(e.count), 0);
                 document.getElementById('statPedidos').textContent = totalPedidos;
-                document.getElementById('statVentasHoy').textContent = HalleyCol.ui.formatCurrency(data.data.ventas_hoy);
-                document.getElementById('statClientes').textContent = '-';
-                document.getElementById('statConversaciones').textContent = '-';
+                document.getElementById('statVentasHoy').textContent = Vekas.ui.formatCurrency(data.data.ventas_hoy || 0);
+
+                // Cargar clientes y conversaciones en paralelo para llenar los contadores reales
+                let countClientes = 0;
+                let countConversaciones = 0;
+                try {
+                    const clientsData = await Vekas.api.request('/clients');
+                    countClientes = clientsData.clients ? clientsData.clients.length : 0;
+                } catch (e) {
+                    console.error('Error fetching clients for stat:', e);
+                }
+
+                try {
+                    const convData = await Vekas.api.request('/conversations');
+                    countConversaciones = convData.conversations ? convData.conversations.length : 0;
+                } catch (e) {
+                    console.error('Error fetching conversations for stat:', e);
+                }
+
+                document.getElementById('statClientes').textContent = countClientes;
+                document.getElementById('statConversaciones').textContent = countConversaciones;
 
                 // Pedidos por estado
                 const estadosHtml = data.data.estados.map(e => `
                     <div style="padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
-                        <span><span class="badge ${HalleyCol.ui.getBadgeForStatus(e.estado)}">${e.estado}</span></span>
+                        <span><span class="badge ${Vekas.ui.getBadgeForStatus(e.estado)}">${e.estado}</span></span>
                         <strong>${e.count}</strong>
                     </div>
                 `).join('');
@@ -158,14 +199,14 @@
 
                 // Pedidos recientes
                 if (data.data.pedidos_recientes && data.data.pedidos_recientes.length > 0) {
-                    HalleyCol.ui.renderOrdersTable(data.data.pedidos_recientes, 'pedidosRecientesContainer');
+                    Vekas.ui.renderOrdersTable(data.data.pedidos_recientes, 'pedidosRecientesContainer');
                 } else {
                     document.getElementById('pedidosRecientesContainer').innerHTML = '<div class="empty-state"><p>No hay pedidos recientes</p></div>';
                 }
 
             } catch (error) {
                 console.error('Error loading dashboard:', error);
-                HalleyCol.ui.showAlert('statsGrid', 'Error cargando el dashboard', 'error');
+                Vekas.ui.showAlert('statsGrid', 'Error cargando el dashboard', 'error');
             }
         }
 

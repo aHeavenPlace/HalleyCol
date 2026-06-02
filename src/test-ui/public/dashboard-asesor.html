@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conversaciones - HalleyCol CRM</title>
+    <title>Conversaciones - Vekas CRM</title>
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
@@ -12,10 +12,10 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-logo">
-                    <img src="/img/logo.png" alt="HalleyCol">
+                    <img src="/img/logo.png" alt="Vekas">
                 </div>
                 <div class="sidebar-brand">
-                    <h1>HalleyCol</h1>
+                    <h1>Vekas</h1>
                     <p>CRM System</p>
                 </div>
             </div>
@@ -26,79 +26,157 @@
             </div>
             
             <nav>
-                <ul class="sidebar-nav">
-                    <li><a href="/dashboard-asesor" class="active">💬 Conversaciones</a></li>
+                <ul class="sidebar-nav" id="sidebarNav">
+                    <!-- Se llena dinámicamente según el rol -->
                 </ul>
             </nav>
             
             <div class="sidebar-logout">
-                <a href="#" onclick="HalleyCol.auth.logout(); return false;">🚪 Cerrar Sesión</a>
+                <a href="#" onclick="Vekas.auth.logout(); return false;">🚪 Cerrar Sesión</a>
             </div>
         </aside>
 
         <!-- Main Content -->
-        <main class="main-content">
-            <div class="page-header">
+        <main class="main-content" style="padding-bottom: 10px;">
+            <div class="page-header" style="margin-bottom: 20px;">
                 <div>
                     <h1 class="page-title">💬 Centro de Atención</h1>
-                    <p class="page-subtitle">Gestioná las conversaciones que requieren atención humana</p>
+                    <p class="page-subtitle">Gestioná las conversaciones de WhatsApp e intervení en tiempo real</p>
                 </div>
             </div>
 
             <div id="alertContainer"></div>
 
             <!-- Stats Cards -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon primary">💬</div>
+            <div class="stats-grid" style="margin-bottom: 20px;">
+                <div class="stat-card" style="padding: 16px;">
+                    <div class="stat-icon primary" style="width: 44px; height: 44px; font-size: 20px;">💬</div>
                     <div class="stat-content">
-                        <h3 id="statTotales">-</h3>
-                        <p>Total Conversaciones</p>
+                        <h3 id="statTotales" style="font-size: 22px;">-</h3>
+                        <p style="font-size: 11px;">Total Chats</p>
                     </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon warning">⚠️</div>
+                <div class="stat-card" style="padding: 16px;">
+                    <div class="stat-icon danger" style="width: 44px; height: 44px; font-size: 20px;">⚠️</div>
                     <div class="stat-content">
-                        <h3 id="statRequierenAsesor">-</h3>
-                        <p>Requieren Asesor</p>
+                        <h3 id="statRequierenAsesor" style="font-size: 22px;">-</h3>
+                        <p style="font-size: 11px;">Requieren Asesor</p>
                     </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon success">✅</div>
+                <div class="stat-card" style="padding: 16px;">
+                    <div class="stat-icon success" style="width: 44px; height: 44px; font-size: 20px;">✅</div>
                     <div class="stat-content">
-                        <h3 id="statActivas">-</h3>
-                        <p>Activas Hoy</p>
+                        <h3 id="statActivas" style="font-size: 22px;">-</h3>
+                        <p style="font-size: 11px;">Activas Hoy</p>
                     </div>
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                <!-- Lista de conversaciones -->
-                <div class="table-container">
-                    <div class="table-header">
-                        <h2>Conversaciones</h2>
-                        <div class="table-actions">
-                            <label style="font-size: 12px; display: flex; align-items: center; gap: 6px;">
-                                <input type="checkbox" id="filterRequierenAsesor" checked>
-                                Solo requieren asesor
-                            </label>
-                        </div>
+            <!-- Interactive Chat Workspace Grid -->
+            <div class="chat-layout">
+                <!-- Panel izquierdo: Conversaciones -->
+                <div class="chat-list-panel" style="display: flex; flex-direction: column;">
+                    <div class="chat-list-header">
+                        <h3 style="margin-bottom: 8px;">Clientes Activos</h3>
+                        <label style="font-size: 12px; display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--gray);">
+                            <input type="checkbox" id="filterRequierenAsesor" checked>
+                            <strong>Solo Requiere Asesor</strong>
+                        </label>
                     </div>
-                    <div id="conversacionesContainer" style="max-height: 60vh; overflow-y: auto;">
+                    <div class="chat-list-scroll" id="conversacionesContainer">
                         <div class="loading"><div class="spinner"></div></div>
                     </div>
                 </div>
 
-                <!-- Mensajes de la conversación seleccionada -->
-                <div class="table-container">
-                    <div class="table-header">
-                        <h2 id="chatTitle">Selecciona una conversación</h2>
+                <!-- Panel central: Ventana de Mensajes -->
+                <div class="chat-window-panel">
+                    <div class="chat-window-header">
+                        <div class="chat-window-title">
+                            <h2 id="chatTitle">Selecciona un Chat</h2>
+                            <span id="chatSubtitle">Escoge un cliente de la lista para comenzar a chatear</span>
+                        </div>
+                        <div id="chatActions" style="display: none;">
+                            <button class="btn-primary" onclick="resolveConversation()" style="padding: 8px 16px; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; background: linear-gradient(135deg, var(--success) 0%, #059669 100%);">
+                                ✓ Resolver Atención
+                            </button>
+                        </div>
                     </div>
-                    <div id="mensajesContainer" style="max-height: 60vh; overflow-y: auto; padding: 20px;">
+
+                    <div class="chat-messages-feed" id="mensajesContainer">
                         <div class="empty-state">
                             <div class="empty-state-icon">💬</div>
-                            <h3>Sin mensajes</h3>
-                            <p>Selecciona una conversación para ver el historial</p>
+                            <h3>Consola de Atención Asistida</h3>
+                            <p>En este panel aparecerá la conversación seleccionada en tiempo real. Los mensajes del cliente, del chatbot y de otros asesores se sincronizarán dinámicamente.</p>
+                        </div>
+                    </div>
+
+                    <div class="chat-input-area" id="inputAreaContainer" style="display: none;">
+                        <textarea id="msgInput" placeholder="Escribe tu respuesta aquí... (Ctrl+Enter para enviar)" rows="2"></textarea>
+                        <button class="chat-send-btn" id="sendMsgBtn" onclick="sendAdvisorMessage()">
+                            Enviar →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Panel derecho: Herramientas del Asistente -->
+                <div class="chat-sidebar-right">
+                    <div class="chat-sidebar-tabs">
+                        <div class="chat-sidebar-tab active" id="tabClienteBtn" onclick="switchRightTab('cliente')">👤 Cliente</div>
+                        <div class="chat-sidebar-tab" id="tabPedidosBtn" onclick="switchRightTab('pedidos')">📋 Pedidos</div>
+                        <div class="chat-sidebar-tab" id="tabCatalogoBtn" onclick="switchRightTab('catalogo')">📦 Catálogo</div>
+                    </div>
+
+                    <div class="chat-sidebar-content">
+                        <!-- Pestaña 1: Ficha del Cliente y Acciones FSM -->
+                        <div id="tabCliente" class="tab-pane">
+                            <div class="client-profile-box">
+                                <div class="client-avatar">👤</div>
+                                <div class="client-name" id="clientProfileName">Sin seleccionar</div>
+                                <div id="clientProfilePhone" style="font-size: 13px; color: var(--gray); margin-bottom: 12px; font-family: monospace;">-</div>
+                                <a href="#" target="_blank" class="client-whatsapp-link" id="clientWhatsappLink" style="display: none;">
+                                    🟢 Contactar por WhatsApp Directo
+                                </a>
+                            </div>
+
+                            <div style="background: var(--light); border: 1px solid var(--border); padding: 14px; border-radius: 12px; margin-top: 15px;">
+                                <h4 style="font-size: 13px; font-weight: 700; text-transform: uppercase; color: var(--gray); margin-bottom: 10px; letter-spacing: 0.5px;">Control del Chatbot</h4>
+                                
+                                <div class="form-group" style="margin-bottom: 10px;">
+                                    <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Estado FSM Actual</label>
+                                    <select id="fsmStateOverride" style="width: 100%; padding: 8px 10px; border-radius: 8px; border: 2px solid var(--border); font-size: 13px;" disabled>
+                                        <option value="IDLE">IDLE (Espera/Catálogo)</option>
+                                        <option value="CATALOGO">CATALOGO (Consulta catálogo)</option>
+                                        <option value="TALLAS">TALLAS (Selección de talla)</option>
+                                        <option value="DIRECCION">DIRECCION (Ingreso de dirección)</option>
+                                        <option value="PAGO">PAGO (Confirmación de pago)</option>
+                                        <option value="CONFIRMACION">CONFIRMACION (Pedido guardado)</option>
+                                    </select>
+                                </div>
+                                <button class="btn-secondary" id="btnSaveFsmState" onclick="overrideFsmState()" style="width: 100%; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; display: none;">
+                                    Forzar Estado FSM
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Pestaña 2: Pedidos del Cliente en Contexto -->
+                        <div id="tabPedidos" class="tab-pane" style="display: none;">
+                            <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                                📋 Historial de Compras
+                            </h4>
+                            <div id="sidebarOrdersContainer" style="display: flex; flex-direction: column; gap: 10px;">
+                                <p style="color: var(--gray); font-size: 13px; text-align: center; padding: 20px 0;">Selecciona un cliente con WhatsApp registrado para consultar su historial de pedidos.</p>
+                            </div>
+                        </div>
+
+                        <!-- Pestaña 3: Consultas de Catálogo Integradas -->
+                        <div id="tabCatalogo" class="tab-pane" style="display: none;">
+                            <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 8px;">📦 Consultar Stock</h4>
+                            <div style="margin-bottom: 12px;">
+                                <input type="text" id="catalogoSearch" placeholder="Buscar tenis, marca, categoría..." oninput="filterSidebarCatalog()" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 2px solid var(--border); font-size: 13px;">
+                            </div>
+                            <div id="sidebarCatalogContainer" style="display: flex; flex-direction: column; gap: 8px; max-height: 48vh; overflow-y: auto; padding-right: 2px;">
+                                <div class="loading"><div class="spinner"></div></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -109,21 +187,29 @@
     <script src="/js/app.js"></script>
     <script>
         // Verificar autenticación - solo asesor y admin
-        if (!HalleyCol.auth.requireRole('admin', 'asesor')) {
+        if (!Vekas.auth.requireRole('admin', 'asesor')) {
             window.location.href = '/unauthorized';
         }
 
-        const user = HalleyCol.auth.getCurrentUser();
-        HalleyCol.ui.initSidebar();
+        const user = Vekas.auth.getCurrentUser();
+        Vekas.ui.initSidebar();
 
-        // Cargar conversaciones
+        let activeSessionId = null;
+        let activeClientWhatsapp = null;
+        let allConversations = [];
+        let allCatalogProducts = [];
+        let pollingInterval = null;
+
+        // Cargar conversaciones iniciales
         async function loadConversations() {
             try {
-                const data = await HalleyCol.api.request('/conversations');
-                updateStats(data.conversations);
-                renderConversations(data.conversations);
+                const data = await Vekas.api.request('/conversations');
+                allConversations = data.conversations || [];
+                updateStats(allConversations);
+                renderConversations(allConversations);
             } catch (error) {
-                HalleyCol.ui.showAlert('alertContainer', 'Error cargando conversaciones', 'error');
+                console.error('Error loading conversations:', error);
+                Vekas.ui.showAlert('alertContainer', 'Error cargando conversaciones', 'error');
             }
         }
 
@@ -147,43 +233,109 @@
             
             if (!filtered || filtered.length === 0) {
                 container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">💬</div>
-                        <h3>No hay conversaciones</h3>
-                        <p>${filterAsesor ? 'No hay conversaciones que requieran asesor' : 'Las conversaciones del chatbot aparecerán aquí'}</p>
+                    <div class="empty-state" style="padding: 30px 10px;">
+                        <div class="empty-state-icon" style="font-size: 40px; margin-bottom: 10px;">💬</div>
+                        <h3 style="font-size: 15px;">No hay conversaciones</h3>
+                        <p style="font-size: 13px;">${filterAsesor ? 'Sin conversaciones que requieran asesor' : 'Las conversaciones aparecerán aquí'}</p>
                     </div>
                 `;
                 return;
             }
 
-            container.innerHTML = filtered.map(c => `
-                <div onclick="loadMessages('${c.session_id}')" style="padding: 16px 20px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='var(--light)'" onmouseout="this.style.background='white'">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <strong style="font-size: 14px;">${c.cliente_whatsapp || c.session_id}</strong>
-                        ${c.necesita_asesor ? '<span class="badge badge-danger">Requiere Asesor</span>' : '<span class="badge badge-success">Atendido</span>'}
+            container.innerHTML = filtered.map(c => {
+                const isActive = c.session_id === activeSessionId ? 'active' : '';
+                return `
+                    <div onclick="selectConversation('${c.session_id}', '${c.cliente_whatsapp || ''}', '${c.estado_fsm || 'IDLE'}')" class="chat-item ${isActive}">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <strong style="font-size: 13px; color: var(--dark);">${c.cliente_whatsapp || c.session_id}</strong>
+                            ${c.necesita_asesor ? '<span class="pulse-badge">⚠️ Requiere Asesor</span>' : '<span class="badge badge-success" style="font-size: 10px;">Atendido</span>'}
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--gray);">
+                            <span>FSM: <code>${c.estado_fsm || 'IDLE'}</code></span>
+                            <span>${Vekas.ui.formatRelativeTime(c.updated_at)}</span>
+                        </div>
                     </div>
-                    <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--gray);">
-                        <span>Estado: ${c.estado_fsm}</span>
-                        <span>${HalleyCol.ui.formatRelativeTime(c.updated_at)}</span>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         document.getElementById('filterRequierenAsesor').addEventListener('change', () => {
-            loadConversations();
+            renderConversations(allConversations);
         });
 
+        // Selección de conversación
+        async function selectConversation(sessionId, clientWhatsapp, currentState) {
+            activeSessionId = sessionId;
+            activeClientWhatsapp = clientWhatsapp;
+
+            // Marcar elemento activo en la lista
+            document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('active'));
+            renderConversations(allConversations); // Recargar clases active
+
+            // Mostrar área de entrada y botón de resolver
+            document.getElementById('chatActions').style.display = 'block';
+            document.getElementById('inputAreaContainer').style.display = 'flex';
+            document.getElementById('msgInput').focus();
+
+            // Configurar perfil de cliente lateral
+            document.getElementById('clientProfileName').textContent = clientWhatsapp ? 'Cliente WhatsApp' : 'Sesión Anónima';
+            document.getElementById('clientProfilePhone').textContent = clientWhatsapp || sessionId;
+            
+            const waLink = document.getElementById('clientWhatsappLink');
+            if (clientWhatsapp) {
+                const cleanPhone = clientWhatsapp.replace(/[^0-9]/g, '');
+                waLink.href = `https://wa.me/${cleanPhone}`;
+                waLink.style.display = 'inline-flex';
+                loadSidebarOrders(clientWhatsapp);
+            } else {
+                waLink.style.display = 'none';
+                document.getElementById('sidebarOrdersContainer').innerHTML = '<p style="color: var(--gray); font-size: 13px; text-align: center; padding: 20px 0;">Este cliente no tiene un número de WhatsApp registrado.</p>';
+            }
+
+            // Habilitar override de FSM
+            const fsmSelector = document.getElementById('fsmStateOverride');
+            fsmSelector.value = currentState;
+            fsmSelector.disabled = false;
+            document.getElementById('btnSaveFsmState').style.display = 'block';
+
+            // Cargar mensajes y configurar polling
+            loadMessages(sessionId);
+            setupPolling(sessionId);
+        }
+
+        // Configuración de Polling para simular tiempo real
+        function setupPolling(sessionId) {
+            if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = setInterval(async () => {
+                if (activeSessionId === sessionId) {
+                    try {
+                        const data = await Vekas.api.request(`/conversations/${sessionId}/messages`);
+                        // Renderizar mensajes solo si el número de mensajes cambió para no refrescar innecesariamente
+                        const feed = document.getElementById('mensajesContainer');
+                        const currentBubbles = feed.querySelectorAll('.msg-bubble').length;
+                        if (data.messages && data.messages.length !== currentBubbles) {
+                            renderMessages(data.messages);
+                        }
+                    } catch (e) {
+                        console.error('Polling error:', e);
+                    }
+                }
+            }, 4000);
+        }
+
+        // Cargar mensajes
         async function loadMessages(sessionId) {
             try {
-                document.getElementById('chatTitle').textContent = `Mensajes: ${sessionId}`;
+                document.getElementById('chatTitle').textContent = `Chat: ${activeClientWhatsapp || sessionId}`;
+                document.getElementById('chatSubtitle').textContent = `Session ID: ${sessionId}`;
                 document.getElementById('mensajesContainer').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
                 
-                const data = await HalleyCol.api.request(`/conversations/${sessionId}/messages`);
+                const data = await Vekas.api.request(`/conversations/${sessionId}/messages`);
                 renderMessages(data.messages);
             } catch (error) {
+                console.error('Error loading messages:', error);
                 document.getElementById('mensajesContainer').innerHTML = `
-                    <div class="empty-state"><p>Error cargando mensajes</p></div>
+                    <div class="empty-state" style="padding: 30px;"><p>Error cargando mensajes. Intenta recargar.</p></div>
                 `;
             }
         }
@@ -196,23 +348,268 @@
                     <div class="empty-state">
                         <div class="empty-state-icon">💬</div>
                         <h3>Sin mensajes</h3>
-                        <p>Esta conversación no tiene mensajes</p>
+                        <p>No se encontraron mensajes en esta sesión.</p>
                     </div>
                 `;
                 return;
             }
 
-            container.innerHTML = messages.map(m => `
-                <div style="margin-bottom: 12px; padding: 12px 16px; border-radius: 12px; max-width: 80%; ${m.emisor === 'user' ? 'background: var(--primary); color: white; margin-left: auto;' : 'background: var(--light);'}">
-                    <div style="font-size: 11px; opacity: 0.7; margin-bottom: 4px;">
-                        ${m.emisor === 'user' ? '👤 Usuario' : m.emisor === 'bot' ? '🤖 Bot' : '👨‍💼 Asesor'} • ${HalleyCol.ui.formatRelativeTime(m.created_at)}
+            container.innerHTML = messages.map(m => {
+                let bubbleClass = 'bot';
+                let emisorLabel = '🤖 Bot';
+                
+                if (m.emisor === 'user') {
+                    bubbleClass = 'user';
+                    emisorLabel = '👤 Cliente';
+                } else if (m.emisor === 'asesor') {
+                    bubbleClass = 'asesor';
+                    emisorLabel = '👨‍💼 Asesor';
+                }
+
+                return `
+                    <div class="msg-bubble ${bubbleClass}">
+                        <div class="msg-bubble-meta">
+                            <span>${emisorLabel}</span> • <span>${Vekas.ui.formatRelativeTime(m.created_at)}</span>
+                        </div>
+                        <div style="white-space: pre-wrap; word-break: break-word; font-size: 13.5px;">${m.contenido}</div>
                     </div>
-                    <div style="white-space: pre-wrap; word-break: break-word;">${m.contenido}</div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
+
+            // Scroll suave hacia abajo
+            setTimeout(() => {
+                container.scrollTop = container.scrollHeight;
+            }, 50);
         }
 
+        // Enviar mensaje como asesor
+        async function sendAdvisorMessage() {
+            const input = document.getElementById('msgInput');
+            const message = input.value.trim();
+            if (!message || !activeSessionId) return;
+
+            const sendBtn = document.getElementById('sendMsgBtn');
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'Enviando...';
+
+            try {
+                await Vekas.api.request(`/conversations/${activeSessionId}/messages`, {
+                    method: 'POST',
+                    body: JSON.stringify({ message }),
+                });
+
+                input.value = '';
+                await loadConversations(); // Recargar lista para actualizar updated_at
+                await loadMessages(activeSessionId); // Recargar mensajes
+            } catch (error) {
+                console.error('Error sending message:', error);
+                alert('No se pudo enviar el mensaje: ' + error.message);
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Enviar →';
+                input.focus();
+            }
+        }
+
+        // Enviar con Ctrl+Enter
+        document.getElementById('msgInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                e.preventDefault();
+                sendAdvisorMessage();
+            }
+        });
+
+        // Marcar conversación como atendida (Resolver)
+        async function resolveConversation() {
+            if (!activeSessionId) return;
+            try {
+                await Vekas.api.request(`/conversations/${activeSessionId}`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ necesita_asesor: false }),
+                });
+
+                Vekas.ui.showAlert('alertContainer', 'Atención marcada como resuelta exitosamente', 'success');
+                
+                // Limpiar vista activa
+                activeSessionId = null;
+                activeClientWhatsapp = null;
+                if (pollingInterval) clearInterval(pollingInterval);
+
+                document.getElementById('chatActions').style.display = 'none';
+                document.getElementById('inputAreaContainer').style.display = 'none';
+                document.getElementById('chatTitle').textContent = 'Selecciona un Chat';
+                document.getElementById('chatSubtitle').textContent = 'Escoge un cliente de la lista para comenzar a chatear';
+                document.getElementById('mensajesContainer').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">💬</div>
+                        <h3>Centro de Atención</h3>
+                        <p>Selecciona una conversación a la izquierda para interactuar en tiempo real.</p>
+                    </div>
+                `;
+
+                // Resetear ficha cliente
+                document.getElementById('clientProfileName').textContent = 'Sin seleccionar';
+                document.getElementById('clientProfilePhone').textContent = '-';
+                document.getElementById('clientWhatsappLink').style.display = 'none';
+                document.getElementById('fsmStateOverride').disabled = true;
+                document.getElementById('btnSaveFsmState').style.display = 'none';
+
+                await loadConversations();
+            } catch (error) {
+                console.error('Error resolving conversation:', error);
+                alert('Error al resolver la conversación: ' + error.message);
+            }
+        }
+
+        // Forzar cambio manual de FSM
+        async function overrideFsmState() {
+            if (!activeSessionId) return;
+            const newState = document.getElementById('fsmStateOverride').value;
+            try {
+                await Vekas.api.request(`/conversations/${activeSessionId}`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ estado_fsm: newState }),
+                });
+
+                Vekas.ui.showAlert('alertContainer', `Estado del chatbot modificado a ${newState} correctamente`, 'success');
+                await loadConversations();
+            } catch (error) {
+                alert('Error al modificar el estado FSM: ' + error.message);
+            }
+        }
+
+        // --- SISTEMA DE PESTAÑAS DERECHAS ---
+        function switchRightTab(tabName) {
+            document.querySelectorAll('.chat-sidebar-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.style.display = 'none');
+
+            document.getElementById(`tab${capitalizeFirst(tabName)}Btn`).classList.add('active');
+            document.getElementById(`tab${capitalizeFirst(tabName)}`).style.display = 'block';
+
+            if (tabName === 'catalogo' && allCatalogProducts.length === 0) {
+                loadSidebarCatalog();
+            }
+        }
+
+        function capitalizeFirst(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        // Cargar catálogo de calzado en la barra lateral
+        async function loadSidebarCatalog() {
+            const container = document.getElementById('sidebarCatalogContainer');
+            try {
+                const data = await Vekas.api.request('/products');
+                allCatalogProducts = data.products || [];
+                renderSidebarCatalog(allCatalogProducts);
+            } catch (error) {
+                container.innerHTML = '<p style="font-size:12px; color:var(--danger); text-align:center;">Error cargando catálogo</p>';
+            }
+        }
+
+        function renderSidebarCatalog(products) {
+            const container = document.getElementById('sidebarCatalogContainer');
+            if (products.length === 0) {
+                container.innerHTML = '<p style="color:var(--gray); text-align:center; font-size:12px; padding:10px;">No se encontraron calzados</p>';
+                return;
+            }
+
+            container.innerHTML = products.map(p => {
+                const totalStock = Object.values(p.stock || {}).reduce((sum, qty) => sum + Number(qty), 0);
+                return `
+                    <div class="lookup-item">
+                        <strong style="color: var(--dark); font-size: 13px;">${p.name}</strong>
+                        <div style="display:flex; justify-content:space-between; margin-bottom: 4px; font-size:11px; color:var(--gray);">
+                            <span>Marca: ${p.brand} | Cat: ${p.category}</span>
+                            <span style="color: var(--primary); font-weight:700;">${Vekas.ui.formatCurrency(p.price)}</span>
+                        </div>
+                        <div style="font-size:11px;">
+                            <span>Tallas: ${p.available_sizes?.join(', ') || 'N/A'}</span><br>
+                            <span style="font-weight:600; color: ${totalStock > 0 ? 'var(--success)' : 'var(--danger)'}">
+                                Stock Total: ${totalStock} un.
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterSidebarCatalog() {
+            const query = document.getElementById('catalogoSearch').value.toLowerCase().trim();
+            const filtered = allCatalogProducts.filter(p => 
+                p.name.toLowerCase().includes(query) ||
+                p.brand.toLowerCase().includes(query) ||
+                p.category.toLowerCase().includes(query)
+            );
+            renderSidebarCatalog(filtered);
+        }
+
+        // Cargar pedidos recientes del cliente en barra lateral
+        async function loadSidebarOrders(clientWhatsapp) {
+            const container = document.getElementById('sidebarOrdersContainer');
+            container.innerHTML = '<div class="loading"><div class="spinner" style="width:24px; height:24px;"></div></div>';
+            
+            try {
+                const data = await Vekas.api.request('/orders');
+                const clientOrders = data.orders.filter(o => o.cliente_whatsapp === clientWhatsapp);
+
+                if (clientOrders.length === 0) {
+                    container.innerHTML = '<p style="color: var(--gray); font-size: 12px; text-align: center; padding: 20px 0;">Este cliente no registra ningún pedido aún.</p>';
+                    return;
+                }
+
+                container.innerHTML = clientOrders.map(o => `
+                    <div class="lookup-item" style="border-left: 4px solid var(--primary-light);">
+                        <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
+                            <strong style="font-size:12px;">${o.numero_orden}</strong>
+                            <span class="badge ${Vekas.ui.getBadgeForStatus(o.estado)}" style="font-size:10px; padding: 1px 6px;">${o.estado}</span>
+                        </div>
+                        <div style="font-size:11px; color:var(--gray); margin-bottom:4px;">
+                            <span>Productos: <strong>${o.productos}</strong></span><br>
+                            <span>Total: <strong>${Vekas.ui.formatCurrency(o.total)}</strong></span>
+                        </div>
+                        <div style="font-size:11px; display:flex; justify-content:space-between;">
+                            <span>Rastreo: <code>${o.guia_tracker || 'Sin despacho'}</code></span>
+                            <span style="font-size:10px;">${Vekas.ui.formatRelativeTime(o.created_at)}</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                container.innerHTML = '<p style="font-size:12px; color:var(--danger); text-align:center;">Error cargando pedidos</p>';
+            }
+        }
+
+        // Renderizar sidebar dinámico
+        const navItems = {
+            'admin': [
+                { href: '/dashboard', icon: '📊', label: 'Dashboard' },
+                { href: '/productos', icon: '📦', label: 'Productos' },
+                { href: '/pedidos', icon: '📋', label: 'Pedidos' },
+                { href: '/conversaciones', icon: '💬', label: 'Conversaciones' },
+                { href: '/clientes', icon: '👥', label: 'Clientes' },
+                { href: '/reportes', icon: '📈', label: 'Reportes' },
+                { href: '/usuarios', icon: '👤', label: 'Usuarios' },
+            ],
+            'asesor': [
+                { href: '/dashboard-asesor', icon: '💬', label: 'Mis Conversaciones' },
+                { href: '/productos', icon: '📦', label: 'Productos' },
+                { href: '/pedidos', icon: '📋', label: 'Pedidos' },
+            ]
+        };
+
+        const nav = document.getElementById('sidebarNav');
+        const items = navItems[user.role] || navItems['asesor'];
+        nav.innerHTML = items.map(item => `
+            <li><a href="${item.href}" class="${window.location.pathname === item.href ? 'active' : ''}">${item.icon} ${item.label}</a></li>
+        `).join('');
+
+        // Inicialización de la cola de atención
         loadConversations();
+
+        // Limpiar polling al salir de la pantalla
+        window.addEventListener('beforeunload', () => {
+            if (pollingInterval) clearInterval(pollingInterval);
+        });
     </script>
 </body>
 </html>

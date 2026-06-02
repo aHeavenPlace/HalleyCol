@@ -10,13 +10,15 @@ import * as bcrypt from 'bcrypt';
 
 dotenv.config();
 
+const isRemote = process.env.PGHOST && !process.env.PGHOST.includes('localhost');
+
 const pool = new Pool({
   host: process.env.PGHOST || 'localhost',
   port: Number(process.env.PGPORT) || 5432,
   user: process.env.PGUSER || 'postgres',
   password: process.env.PGPASSWORD || '12345678',
-  database: process.env.PGDATABASE || 'halleycol_db',
-  ssl: true,
+  database: process.env.PGDATABASE || 'vekas_db',
+  ssl: isRemote ? true : false, // SSL solo para bases de datos remotas (Render)
 });
 
 const usuariosEjemplo = [

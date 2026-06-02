@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reportes - HalleyCol CRM</title>
+    <title>Reportes - Vekas CRM</title>
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 
@@ -13,10 +13,10 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-logo">
-                    <img src="/img/logo.png" alt="HalleyCol">
+                    <img src="/img/logo.png" alt="Vekas">
                 </div>
                 <div class="sidebar-brand">
-                    <h1>HalleyCol</h1>
+                    <h1>Vekas</h1>
                     <p>CRM System</p>
                 </div>
             </div>
@@ -28,7 +28,7 @@
                 <ul class="sidebar-nav" id="sidebarNav"></ul>
             </nav>
             <div class="sidebar-logout">
-                <a href="#" onclick="HalleyCol.auth.logout(); return false;">🚪 Cerrar Sesión</a>
+                <a href="#" onclick="Vekas.auth.logout(); return false;">🚪 Cerrar Sesión</a>
             </div>
         </aside>
 
@@ -100,41 +100,47 @@
     </div>
     <script src="/js/app.js"></script>
     <script>
-        if (!HalleyCol.auth.requireRole('admin', 'ventas')) window.location.href = '/unauthorized';
-        const user = HalleyCol.auth.getCurrentUser();
-        HalleyCol.ui.initSidebar();
+        if (!Vekas.auth.requireRole('admin', 'ventas')) window.location.href = '/unauthorized';
+        const user = Vekas.auth.getCurrentUser();
+        Vekas.ui.initSidebar();
 
         async function loadReports() {
             try {
-                const data = await HalleyCol.api.request('/reports');
+                const response = await Vekas.api.request('/reports');
+                const reportData = response.data;
 
-                document.getElementById('statTotalPedidos').textContent = data.total_pedidos || 0;
-                document.getElementById('statVentasTotales').textContent = HalleyCol.ui.formatCurrency(data.ventas_totales);
-                document.getElementById('statClientesUnicos').textContent = data.clientes_unicos || 0;
-                document.getElementById('statTicketPromedio').textContent = HalleyCol.ui.formatCurrency(data.ticket_promedio);
+                if (!reportData) {
+                    throw new Error('No se encontraron datos en los reportes');
+                }
+
+                document.getElementById('statTotalPedidos').textContent = reportData.total_pedidos || 0;
+                document.getElementById('statVentasTotales').textContent = Vekas.ui.formatCurrency(reportData.ventas_totales || 0);
+                document.getElementById('statClientesUnicos').textContent = reportData.clientes_unicos || 0;
+                document.getElementById('statTicketPromedio').textContent = Vekas.ui.formatCurrency(reportData.ticket_promedio || 0);
 
                 // Métodos de pago
                 const mpContainer = document.getElementById('metodosPagoContainer');
-                if (data.metodos_pago && data.metodos_pago.length > 0) {
-                    mpContainer.innerHTML = `<table><thead><tr><th>Método</th><th>Cantidad</th></tr></thead><tbody>${data.metodos_pago.map(m => `<tr><td>${m.metodo_pago}</td><td><strong>${m.count}</strong></td></tr>`).join('')}</tbody></table>`;
+                if (reportData.metodos_pago && reportData.metodos_pago.length > 0) {
+                    mpContainer.innerHTML = `<table><thead><tr><th>Método</th><th>Cantidad de Pedidos</th></tr></thead><tbody>${reportData.metodos_pago.map(m => `<tr><td>${m.metodo_pago || 'No especificado'}</td><td><strong>${m.count}</strong></td></tr>`).join('')}</tbody></table>`;
                 } else {
                     mpContainer.innerHTML = '<div class="empty-state"><p>No hay datos de métodos de pago</p></div>';
                 }
 
                 // Productos vendidos
                 const pvContainer = document.getElementById('productosVendidosContainer');
-                if (data.productos_vendidos && data.productos_vendidos.length > 0) {
-                    pvContainer.innerHTML = `<table><thead><tr><th>Producto</th><th>Unidades</th><th>Ingresos</th></tr></thead><tbody>${data.productos_vendidos.map(p => `<tr><td>${p.nombre}</td><td>${p.unidades}</td><td><strong>${HalleyCol.ui.formatCurrency(p.ingresos)}</strong></td></tr>`).join('')}</tbody></table>`;
+                if (reportData.productos_vendidos && reportData.productos_vendidos.length > 0) {
+                    pvContainer.innerHTML = `<table><thead><tr><th>Producto</th><th>Unidades Vendidas</th><th>Ingresos Generados</th></tr></thead><tbody>${reportData.productos_vendidos.map(p => `<tr><td><strong>${p.nombre || 'N/A'}</strong></td><td>${p.unidades}</td><td><strong style="color: var(--success);">${Vekas.ui.formatCurrency(p.ingresos || 0)}</strong></td></tr>`).join('')}</tbody></table>`;
                 } else {
                     pvContainer.innerHTML = '<div class="empty-state"><p>No hay datos de productos vendidos</p></div>';
                 }
             } catch (error) {
-                HalleyCol.ui.showAlert('alertContainer', 'Error cargando reportes', 'error');
+                console.error('Error loadReports:', error);
+                Vekas.ui.showAlert('alertContainer', 'Error cargando reportes: ' + error.message, 'error');
             }
         }
 
         const navItems = {
-            'admin': [{ href: '/dashboard', icon: '📊', label: 'Dashboard' }, { href: '/productos', icon: '📦', label: 'Productos' }, { href: '/pedidos', icon: '📋', label: 'Pedidos' }, { href: '/conversaciones', icon: '💬', label: 'Conversaciones' }, { href: '/clientes', icon: '👥', label: 'Clientes' }, { href: '/reportes', icon: '📈', label: 'Reportes' }],
+            'admin': [{ href: '/dashboard', icon: '📊', label: 'Dashboard' }, { href: '/productos', icon: '📦', label: 'Productos' }, { href: '/pedidos', icon: '📋', label: 'Pedidos' }, { href: '/conversaciones', icon: '💬', label: 'Conversaciones' }, { href: '/clientes', icon: '👥', label: 'Clientes' }, { href: '/reportes', icon: '📈', label: 'Reportes' }, { href: '/usuarios', icon: '👤', label: 'Usuarios' }],
             'ventas': [{ href: '/dashboard', icon: '📊', label: 'Dashboard' }, { href: '/productos', icon: '📦', label: 'Productos' }, { href: '/pedidos', icon: '📋', label: 'Pedidos' }, { href: '/clientes', icon: '👥', label: 'Clientes' }, { href: '/reportes', icon: '📈', label: 'Reportes' }],
         };
         document.getElementById('sidebarNav').innerHTML = (navItems[user.role] || navItems['ventas']).map(item => `<li><a href="${item.href}" class="${window.location.pathname === item.href ? 'active' : ''}">${item.icon} ${item.label}</a></li>`).join('');

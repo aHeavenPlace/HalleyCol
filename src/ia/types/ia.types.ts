@@ -1,6 +1,6 @@
 /**
  * @file ia.types.ts
- * @description Tipos e interfaces centrales del módulo de Inteligencia Artificial de HalleyCol.
+ * @description Tipos e interfaces centrales del módulo de Inteligencia Artificial de Vekas.
  * Todos los contratos de datos del sistema IA están definidos aquí.
  * @module ia/types
  * @version 1.0.0

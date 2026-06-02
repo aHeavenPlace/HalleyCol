@@ -1,5 +1,5 @@
 # ========================================
-# HalleyCol CRM - Dockerfile
+# Vekas CRM - Dockerfile
 # ========================================
 
 # Usar imagen oficial de Node.js LTS
@@ -25,7 +25,7 @@ RUN npm run build:ia 2>/dev/null || echo "Build step completed"
 
 # Exponer puerto
 EXPOSE 3000
-
+    
 # Variables de entorno por defecto
 ENV NODE_ENV=production
 ENV PORT=3000

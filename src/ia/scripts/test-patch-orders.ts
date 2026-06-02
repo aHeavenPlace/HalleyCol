@@ -5,7 +5,7 @@ import * as jwt from 'jsonwebtoken';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'halleycol-super-secret-key-2026';
+const JWT_SECRET = process.env.JWT_SECRET || 'vekas-super-secret-key-2026';
 
 async function test() {
   const adminToken = jwt.sign({ id: 1, username: 'admin', role: 'admin' }, JWT_SECRET);

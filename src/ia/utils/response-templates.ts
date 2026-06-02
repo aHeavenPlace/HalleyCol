@@ -1,6 +1,6 @@
 /**
  * @file response-templates.ts
- * @description Sistema de plantillas dinámicas de respuesta para el chatbot HalleyCol.
+ * @description Sistema de plantillas dinámicas de respuesta para el chatbot Vekas.
  * Cada plantilla tiene texto base con variables interpolables y botones de acción rápida.
  * @module ia/utils
  * @version 1.0.0
@@ -21,18 +21,18 @@ export interface ResponseTemplate {
 }
 
 /**
- * Variables de configuración del negocio HalleyCol.
+ * Variables de configuración del negocio Vekas.
  * En producción estas vendrán de la base de datos o variables de entorno.
  */
 export const businessConfig = {
   numeroNequi: '300 482 1290',
   numeroDaviplata: '312 949 2018',
-  llaveBreb: 'HalleyCOL@gmail.com',
+  llaveBreb: 'vekas@gmail.com',
   tallasDisponibles: '35, 36, 37, 38, 39, 40',
   ciudadesEnvio: 'todo Colombia vía Coordinadora y Servientrega',
   costoEnvio: 'Gratis en compras mayores a $200.000 · Desde $8.000 en otros pedidos',
   horarioAtencion: 'Lunes a sábado de 8am a 7pm',
-  nombreTienda: 'HalleyCol',
+  nombreTienda: 'Vekas',
 };
 
 /**
@@ -57,7 +57,7 @@ export const responseTemplates: Record<KnownIntent, ResponseTemplate> = {
   estado_pedido: {
     base:
       'Con gusto te ayudo con el estado de tu pedido 📦\n\n' +
-      'Por favor comparte tu número de pedido (formato HC-XXXX) o el número de rastreo ' +
+      'Por favor comparte tu número de pedido (formato VK-XXXX o HC-XXXX) o el número de rastreo ' +
       'que te enviamos por WhatsApp al realizar tu compra.',
     buttons: ['Tengo mi número de pedido', 'No recuerdo el número', 'Hablar con asesor'],
   },

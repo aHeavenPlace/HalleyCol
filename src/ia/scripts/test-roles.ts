@@ -9,7 +9,7 @@ import * as bcrypt from 'bcrypt';
 
 dotenv.config();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'halleycol-super-secret-key-2026';
+const JWT_SECRET = process.env.JWT_SECRET || 'vekas-super-secret-key-2026';
 const BASE_URL = 'http://localhost:3000';
 
 const usuarios = [

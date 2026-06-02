@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clientes - HalleyCol CRM</title>
+    <title>Clientes - Vekas CRM</title>
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 
@@ -13,10 +13,10 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-logo">
-                    <img src="/img/logo.png" alt="HalleyCol">
+                    <img src="/img/logo.png" alt="Vekas">
                 </div>
                 <div class="sidebar-brand">
-                    <h1>HalleyCol</h1>
+                    <h1>Vekas</h1>
                     <p>CRM System</p>
                 </div>
             </div>
@@ -28,7 +28,7 @@
                 <ul class="sidebar-nav" id="sidebarNav"></ul>
             </nav>
             <div class="sidebar-logout">
-                <a href="#" onclick="HalleyCol.auth.logout(); return false;">🚪 Cerrar Sesión</a>
+                <a href="#" onclick="Vekas.auth.logout(); return false;">🚪 Cerrar Sesión</a>
             </div>
         </aside>
 
@@ -54,26 +54,26 @@
     </div>
     <script src="/js/app.js"></script>
     <script>
-        if (!HalleyCol.auth.requireRole('admin', 'ventas')) window.location.href = '/unauthorized';
-        const user = HalleyCol.auth.getCurrentUser();
-        HalleyCol.ui.initSidebar();
+        if (!Vekas.auth.requireRole('admin', 'ventas')) window.location.href = '/unauthorized';
+        const user = Vekas.auth.getCurrentUser();
+        Vekas.ui.initSidebar();
 
         async function loadClients() {
             try {
-                const data = await HalleyCol.api.request('/clients');
+                const data = await Vekas.api.request('/clients');
                 const container = document.getElementById('clientesContainer');
                 if (!data.clients || data.clients.length === 0) {
                     container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">👥</div><h3>No hay clientes</h3><p>Los clientes aparecerán cuando realicen pedidos</p></div>';
                     return;
                 }
-                container.innerHTML = `<table><thead><tr><th>Cliente</th><th>WhatsApp</th><th>Compras</th><th>Total Gastado</th><th>Última Compra</th></tr></thead><tbody>${data.clients.map(c => `<tr><td><strong>${c.nombre || 'N/A'}</strong></td><td>${c.id}</td><td>${c.compras}</td><td><strong>${HalleyCol.ui.formatCurrency(c.total_gastado)}</strong></td><td>${HalleyCol.ui.formatRelativeTime(c.ultima_compra)}</td></tr>`).join('')}</tbody></table>`;
+                container.innerHTML = `<table><thead><tr><th>Cliente</th><th>WhatsApp</th><th>Compras</th><th>Total Gastado</th><th>Última Compra</th></tr></thead><tbody>${data.clients.map(c => `<tr><td><strong>${c.nombre || 'N/A'}</strong></td><td>${c.id}</td><td>${c.compras}</td><td><strong>${Vekas.ui.formatCurrency(c.total_gastado)}</strong></td><td>${Vekas.ui.formatRelativeTime(c.ultima_compra)}</td></tr>`).join('')}</tbody></table>`;
             } catch (error) {
-                HalleyCol.ui.showAlert('alertContainer', 'Error cargando clientes', 'error');
+                Vekas.ui.showAlert('alertContainer', 'Error cargando clientes', 'error');
             }
         }
 
         const navItems = {
-            'admin': [{ href: '/dashboard', icon: '📊', label: 'Dashboard' }, { href: '/productos', icon: '📦', label: 'Productos' }, { href: '/pedidos', icon: '📋', label: 'Pedidos' }, { href: '/conversaciones', icon: '💬', label: 'Conversaciones' }, { href: '/clientes', icon: '👥', label: 'Clientes' }, { href: '/reportes', icon: '📈', label: 'Reportes' }],
+            'admin': [{ href: '/dashboard', icon: '📊', label: 'Dashboard' }, { href: '/productos', icon: '📦', label: 'Productos' }, { href: '/pedidos', icon: '📋', label: 'Pedidos' }, { href: '/conversaciones', icon: '💬', label: 'Conversaciones' }, { href: '/clientes', icon: '👥', label: 'Clientes' }, { href: '/reportes', icon: '📈', label: 'Reportes' }, { href: '/usuarios', icon: '👤', label: 'Usuarios' }],
             'ventas': [{ href: '/dashboard', icon: '📊', label: 'Dashboard' }, { href: '/productos', icon: '📦', label: 'Productos' }, { href: '/pedidos', icon: '📋', label: 'Pedidos' }, { href: '/clientes', icon: '👥', label: 'Clientes' }, { href: '/reportes', icon: '📈', label: 'Reportes' }],
         };
         document.getElementById('sidebarNav').innerHTML = (navItems[user.role] || navItems['ventas']).map(item => `<li><a href="${item.href}" class="${window.location.pathname === item.href ? 'active' : ''}">${item.icon} ${item.label}</a></li>`).join('');

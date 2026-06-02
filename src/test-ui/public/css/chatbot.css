@@ -290,11 +290,18 @@ body {
     color: var(--wa-text-main);
 }
 
-/* Loading effect */
+/* Loading effect - Typing indicator */
+.typing-bubble {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px !important;
+    min-width: 54px;
+}
+
 .typing-dot {
     display: inline-block;
-    width: 5px;
-    height: 5px;
+    width: 7px;
+    height: 7px;
     background: var(--wa-text-muted);
     border-radius: 50%;
     margin: 0 2px;
@@ -303,6 +310,7 @@ body {
 
 .typing-dot:nth-child(1) { animation-delay: -0.32s; }
 .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+.typing-dot:nth-child(3) { animation-delay: 0s; }
 
 @keyframes bounce {
     0%, 80%, 100% { transform: translateY(0); }
@@ -390,6 +398,118 @@ body {
     padding: 10px;
     border-radius: 6px;
     font-family: inherit; /* changed to inherit for wa look */
+    font-size: 12px;
+    color: #4ade80;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* ── Burbuja de imagen (comprobante) ─── */
+.bubble-image {
+    padding: 6px 6px 8px 6px !important;
+    max-width: 260px;
+}
+
+.image-caption-label {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 6px;
+    font-style: italic;
+}
+
+.image-msg-caption {
+    font-size: 13.5px;
+    color: var(--wa-msg-text);
+    margin-top: 6px;
+    line-height: 18px;
+}
+
+.chat-image {
+    width: 100%;
+    max-width: 240px;
+    border-radius: 6px;
+    display: block;
+    cursor: zoom-in;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+.chat-image:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+}
+
+/* ── Preview bar (imagen seleccionada pendiente de enviar) ─── */
+.image-preview-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: #182d2a;
+    border-top: 1px solid var(--wa-border);
+    border-bottom: 1px solid var(--wa-border);
+    animation: fadeIn 0.2s ease;
+}
+
+.image-preview-thumb-wrap {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.image-preview-thumb {
+    width: 52px;
+    height: 52px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid var(--wa-primary);
+    display: block;
+}
+
+.remove-image-btn {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 18px;
+    height: 18px;
+    background: #ef4444;
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    line-height: 1;
+}
+
+.remove-image-btn:hover {
+    background: #dc2626;
+}
+
+.image-preview-name {
+    font-size: 12px;
+    color: var(--wa-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+/* Attach button disabled */
+.btn-icon:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.json-viewer {
+    background: rgba(0, 0, 0, 0.4);
+    padding: 10px;
+    border-radius: 6px;
+    font-family: inherit;
     font-size: 12px;
     color: #4ade80;
     white-space: pre-wrap;

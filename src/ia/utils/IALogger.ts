@@ -1,6 +1,6 @@
 /**
  * @file IALogger.ts
- * @description Sistema de logging estructurado para el módulo IA de HalleyCol.
+ * @description Sistema de logging estructurado para el módulo IA de Vekas.
  * Registra cada interacción en consola (desarrollo) y prepara la interfaz
  * para persistencia en PostgreSQL (producción).
  * Estos logs son el dataset para fine-tuning futuro de Gemini.
