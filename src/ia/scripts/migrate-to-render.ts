@@ -22,10 +22,10 @@ const localPool = new Pool({
 // Pool para base de datos RENDER (destino)
 // Credenciales desde Render - External Database URL
 const renderPool = new Pool({
-  host: 'dpg-d836144vikkc73ctvhfg-a.oregon-postgres.render.com',
+  host: 'dpg-d8nno3u7r5hc73b0s0h0-a.oregon-postgres.render.com',
   port: 5432,
-  user: 'vekas_user',
-  password: 'Kg0wvFbP1w8kGufs4yKY02n6VKNL29Ca',
+  user: 'vekas',
+  password: 'eGva0M7gAIm8oZmgl38Nr1gRniW7oH7N',
   database: 'vekas',
   ssl: { rejectUnauthorized: false }, // Render requiere SSL para conexiones externas
 });
@@ -317,7 +317,7 @@ async function main() {
     console.log('\n✅ ¡Migración completada exitosamente!\n');
     console.log('📌 Nota: Actualiza tu .env con las credenciales de Render para usar la nueva DB.');
     console.log('\n   External Database URL:');
-    console.log('   postgresql://vekas_user:Kg0wvFbP1w8kGufs4yKY02n6VKNL29Ca@dpg-d836144vikkc73ctvhfg-a/vekas\n');
+    console.log('   postgresql://vekas:eGva0M7gAIm8oZmgl38Nr1gRniW7oH7N@dpg-d8nno3u7r5hc73b0s0h0-a/vekas\n');
 
   } catch (err) {
     console.error('\n❌ Error durante la migración:', err);

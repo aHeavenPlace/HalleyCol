@@ -117,10 +117,10 @@ Crear archivo `.env` en la raíz:
 
 ```env
 # Database PostgreSQL (Render)
-PGHOST=dpg-d836144vikkc73ctvhfg-a.oregon-postgres.render.com
+PGHOST=dpg-d8nno3u7r5hc73b0s0h0-a.oregon-postgres.render.com
 PGPORT=5432
-PGUSER=vekas_user
-PGPASSWORD=Kg0wvFbP1w8kGufs4yKY02n6VKNL29Ca
+PGUSER=vekas
+PGPASSWORD=eGva0M7gAIm8oZmgl38Nr1gRniW7oH7N
 PGDATABASE=vekas
 
 # Gemini AI
